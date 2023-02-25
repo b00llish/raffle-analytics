@@ -24,7 +24,7 @@ def create_dash_layout(app):
 
     # Body
     body = html.Div([
-        dcc.Markdown(""" ## I'm ready to serve static files on Heroku. Just look at this! """), html.Br()
+        dcc.Markdown(""" ## This is the body """), html.Br()
     ])
 
     # Footer
