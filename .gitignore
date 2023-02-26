@@ -1,3 +1,9 @@
-.idea
+# environment
 venv
 *__pycache__*
+
+# settings
+.env
+
+# IDE
+.idea
