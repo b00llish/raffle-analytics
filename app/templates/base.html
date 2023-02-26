@@ -1,11 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<H1>Rafffle Analytics</H1>
-<H2>coming soon...</H2>
-</body>
-</html>
+{% extends 'bootstrap/base.html' %}
+{% block html_attribs %} lang="en"{% endblock %}
+{% block title %} Raffflytics {% endblock %}
+{% import "bootstrap/fixes.html" as fixes %}
+{# Then, inside the head block, we apply these. To not replace the header,
+   ``super()`` is used: #}
+{% block head %}
+{{super()}}
+
+{#- Docs: http://pythonhosted.org/Flask-Bootstrap/macros.html#fixes
+   The sample application already contains the required static files. #}
+{{fixes.ie8()}}
+{%- endblock %}
+
+{# Adding our own CSS files is also done here. Check the documentation at
+   http://pythonhosted.org/Flask-Bootstrap/basic-usage.html#available-blocks
+   for an overview. #}
+
+
+{# Finally, round things out with navigation #}
+{% block navbar %}
+{{nav.frontend_top.render()}}
+{% endblock %}
+
+{% block navbar %}
+  <div class="container">
+          <nav class="navbar navbar-expand-lg navbar-light bg-light">
+              <a class="navbar-brand" href="#">Navbar</a>
+              <button class="navbar-toggler" type="button" data-toggle="collapse"
+                      data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                      `aria-expanded="false" aria-label="Toggle navigation">
+                  <span class="navbar-toggler-icon"></span>
+              </button>
+
+              <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                  <ul class="navbar-nav mr-auto">
+                      <li class="nav-item active">
+                          <a class="nav-link" href="{{ url_for('main.index') }}">Home <span class="sr-only">(current)</span></a>
+                      </li>
+                      <li class="nav-item">
+                          <a class="nav-link" href="/dashboard">Dashboard</a>
+                      </li>
+
+                  </ul>
+              </div>
+          </nav>
+  </div>
+  <nav class="navbar navbar-default">
+      Nav:
+        <a href="{{ url_for('main.index') }}">Home</a>
+        <a href="/dashboard">Dashboard</a>
+  </nav>
+{% endblock %}
