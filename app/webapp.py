@@ -19,8 +19,8 @@ server_bp = Blueprint('main', __name__)
 
 @server_bp.route('/')
 def index():
-    return "Hello world!"
-    # return render_template("base.html", title='Home Page')
+    # return "Hello world!"
+    return render_template("base.html", title='Home Page')
 
 
 # @server_bp.route('/login/', methods=['GET', 'POST'])
