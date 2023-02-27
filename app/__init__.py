@@ -3,7 +3,8 @@ import os
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask.helpers import get_root_path
-from .nav import nav
+# from app.nav import nav
+# from flask_nav.elements import *
 # from flask_nav.elements import Navbar, View
 # from flask_login import login_required
 
@@ -14,17 +15,12 @@ def create_app():
     server = Flask(__name__)
     env_config = os.getenv("APP_SETTINGS", "config.DevelopmentConfig")
     server.config.from_object(env_config)
-    bootstrap = Bootstrap(server)
 
     register_dashapps(server)
     # register_extensions(server)
     register_blueprints(server)
-    # hard-code disabling
-    # the CDN support (this might become a default in later versions):
-        server.config['BOOTSTRAP_SERVE_LOCAL'] = True
 
-    # We initialize the navigation as well
-    nav.init_app(app)
+    bootstrap = Bootstrap(server)
 
     return server
 
@@ -76,13 +72,3 @@ def register_blueprints(server):
     from app.webapp import server_bp
 
     server.register_blueprint(server_bp)
-
-
-# def register_nav(server):
-#     from app.webapp import server_bp
-#     nav = Navbar(server)
-#     nav.Bar('top', [
-#         nav.Item('Home', 'index'),
-#         nav.Item('Dashboard', 'dashboard'),
-#     ])
-#     server.register_nav(server_bp)

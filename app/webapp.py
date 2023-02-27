@@ -3,6 +3,7 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
+
 # from flask_login import current_user
 # from flask_login import login_required
 # from flask_login import login_user
@@ -14,7 +15,8 @@ from flask import url_for
 # from app.forms import RegistrationForm
 # from app.models import User
 
-server_bp = Blueprint('main', __name__)
+server_bp = Blueprint('main', __name__, template_folder='templates')
+
 
 
 @server_bp.route('/')
