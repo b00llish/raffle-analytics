@@ -6,7 +6,7 @@ basedir = abspath(dirname(__file__))
 dotenv_path = join(basedir, '.env')
 load_dotenv(dotenv_path)
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
+# SECRET_KEY = os.environ.get("SECRET_KEY")
 
 
 class Config:
