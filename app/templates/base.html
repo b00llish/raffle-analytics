@@ -16,6 +16,10 @@
 {# Adding our own CSS files is also done here. Check the documentation at
    http://pythonhosted.org/Flask-Bootstrap/basic-usage.html#available-blocks
    for an overview. #}
+{% block styles -%}
+    {{super()}}  {# do not forget to call super or Bootstrap's own stylesheets
+                    will disappear! #}
+{% endblock %}
 
 {% block navbar %}
 <nav class="navbar navbar-default">
@@ -32,8 +36,8 @@
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                 <ul class="nav navbar-nav">
                     <li><a href="{{ url_for('main.index') }}">Home</a></li>
-                    <li><a href="{{ url_for('/dashboard/') }}">Dashboard</a></li>
-                    <li><a href="{{ url_for('/example/') }}">Example</a></li>
+                    <li><a href="{{ url_for('/volume-quad/') }}">Volume Quadrant</a></li>
+                    <li><a href="{{ url_for('/admin-overview/') }}">Admin - Data Overview</a></li>
                 </ul>
 
             </div>
