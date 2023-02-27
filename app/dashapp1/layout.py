@@ -3,6 +3,6 @@ from dash import html as html
 
 layout = html.Div(id='main', children=[
     # html.H1(id='username'),
-    html.H1('Stock Tickers')
+    html.H1('Dashboard')
 
 ], style={'width': '500'})

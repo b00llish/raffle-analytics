@@ -7,7 +7,11 @@ load_dotenv()
 class Config:
     DEBUG = False
     DEVELOPMENT = False
-    SECRET_KEY = os.getenv("SECRET_KEY", "this-is-the-default-key")
+    SECRET_KEY = SECRET_KEY = os.environ['SECRET_KEY']
+
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SECRET_KEY = os.environ['SECRET_KEY']
 
 
 class ProductionConfig(Config):
