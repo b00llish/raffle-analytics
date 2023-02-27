@@ -13,7 +13,8 @@ class Config:
     DEBUG = False
     DEVELOPMENT = False
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DB_URL')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DB_URL', '').replace(
+        'postgres://', 'postgresql://')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.environ['SECRET_KEY']
 
