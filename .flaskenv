@@ -1,0 +1,2 @@
+FLASK_APP=dashapp
+FLASK_DEBUG=True

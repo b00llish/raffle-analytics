@@ -6,13 +6,14 @@ import pandas as pd
 import matplotlib as mpl
 import gunicorn
 from whitenoise import WhiteNoise
+import config
 
 # Instantiate dash app
 app = Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
 env_config = os.getenv("APP_SETTINGS", "config.DevelopmentConfig")
-app.config.from_object(env_config)
+#app.config.from_object(env_config)
 
-secret_key = app.config.get("SECRET_KEY")
+#secret_key = app.config.get("SECRET_KEY")
 
 # Reference the underlying flask app (Used by gunicorn webserver in Heroku production deployment)
 server = app.server
@@ -27,7 +28,7 @@ def create_dash_layout(app):
 
     # Header
     header = html.Div([html.Br(), dcc.Markdown(
-        """ # Rafffle Analytics - Built with Dash."""
+        """ # Rafffle Analytics - Coming soon..."""
     ),
                        html.Br()
                        ])
