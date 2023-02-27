@@ -1,29 +1,28 @@
 import os
 import pandas as pd
 import connectorx as cx
-from shroomdk import ShroomDK
+
+from config import Config
+
 from dotenv import load_dotenv
+from os.path import join, basename, dirname, abspath
 
-load_dotenv()
+basedir = abspath(dirname(__file__))
 
-sdk = ShroomDK(os.environ.get('SHROOM_KEY_1'))
-os.path.basename(__file__)
+# dotenv_path = join(basedir, '.env')
+# load_dotenv(dotenv_path)
+
 
 def OpenSQL(filename):
+    queries_path = join(basedir, 'queries')
+    filename = join(queries_path, filename) + '.sql'
     fd = open(filename, 'r')
     sqlFile = fd.read()
     fd.close()
     return sqlFile
 
 
-def df_fromSQL(sqlFile):
-    file = OpenSQL(sqlFile)
-    query_result_set = sdk.query(file, ttl_minutes=10)
-    df = pd.DataFrame.from_dict(query_result_set.records)
-    return df
-
-
 def GetExistingFromDB(filename):
     query = OpenSQL(filename)
-    df = cx.read_sql(conn=os.environ.get('db_uri'), query=query, return_type="pandas")
+    df = cx.read_sql(conn=Config.SQLALCHEMY_DATABASE_URI, query=query, return_type="pandas")
     return df
