@@ -16,7 +16,7 @@ def dash_topNav():
         dbc.NavItem(dbc.NavLink("Example", href="/example/")),
         dbc.NavItem(dbc.NavLink("Link", href="/", external_link=True)),
     ]
-    brand = dbc.Col(dbc.NavbarBrand("Raffflytics", href="/"), )
+    brand = dbc.Col(dbc.NavbarBrand("Raffflytics", href="/", external_link=True), )
     nav = dbc.Nav(nav_contents, pills=True)
     top_bar = dbc.NavbarSimple(
         children=[brand, nav],
