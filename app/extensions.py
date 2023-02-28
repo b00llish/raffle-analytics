@@ -1,13 +1,13 @@
 # from flask_login import LoginManager
-# from flask_migrate import Migrate
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from dash import html
 import dash_bootstrap_components as dbc
 
 db = SQLAlchemy()
+migrate = Migrate()
 
 
-# migrate = Migrate()
 # login = LoginManager()
 
 

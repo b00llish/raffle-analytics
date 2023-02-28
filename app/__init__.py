@@ -67,15 +67,15 @@ def register_dashapp(app, title, base_pathname, layout, register_callbacks_fun):
 #
 def register_extensions(server):
     from app.extensions import db
-    #     from app.extensions import login
-    #     from app.extensions import migrate
+    # from app.extensions import login
+    from app.extensions import migrate
     #
     db.init_app(server)
 
 
 #     login.init_app(server)
 #     login.login_view = 'main.login'
-#     migrate.init_app(server, db)
+    migrate.init_app(server, db)
 #
 #
 def register_blueprints(server):

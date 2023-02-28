@@ -7,6 +7,7 @@ from app.extensions import db
 
 from sqlalchemy_utils import URLType
 
+
 # @login.user_loader
 # def load_user(id):
 #     return User.query.get(int(id))
@@ -29,12 +30,12 @@ from sqlalchemy_utils import URLType
 class Raffle(db.Model):
     __tablename__ = 'raffles'
 
-    account = db.Column(db.String(100), primary_key=True, unique=True)
+    account = db.Column(db.String(45), primary_key=True, unique=True)
     dt_start = db.Column(db.DateTime(timezone=True), nullable=False)
 
     # Relationship
-    host_wallet = db.Column(db.String(100), db.ForeignKey('rafflers.wallet'))
-    nft_mint = db.Column(db.String(100), db.ForeignKey('nfts.nft_mint'))
+    host_wallet = db.Column(db.String(45), db.ForeignKey('rafflers.wallet'))
+    nft_mint = db.Column(db.String(45), db.ForeignKey('nfts.nft_mint'))
 
     def __init__(self, account, dt_start, host_wallet, nft_mint):
         self.account = account
@@ -57,8 +58,8 @@ class Buy(db.Model):
     amt_buy = db.Column(db.Float, nullable=False)
 
     # Relationship
-    account = db.Column(db.String(100), db.ForeignKey('raffles.account'))
-    buyer_wallet = db.Column(db.String(100), db.ForeignKey('rafflers.wallet'))
+    account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
+    buyer_wallet = db.Column(db.String(45), db.ForeignKey('rafflers.wallet'))
 
     # ID goes last
     id = db.Column(db.Integer, primary_key=True)
@@ -86,7 +87,7 @@ class Cancel(db.Model):
     dt_cancel = db.Column(db.DateTime(timezone=True), nullable=False)
 
     # Relationship
-    account = db.Column(db.String(100), db.ForeignKey('raffles.account'))
+    account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
 
     # ID goes last
     id = db.Column(db.Integer, primary_key=True)
@@ -108,7 +109,7 @@ class End(db.Model):
     dt_end = db.Column(db.DateTime(timezone=True), nullable=False)
 
     # Relationship
-    account = db.Column(db.String(100), db.ForeignKey('raffles.account'))
+    account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
 
     # ID goes last
     id = db.Column(db.Integer, primary_key=True)
@@ -130,8 +131,8 @@ class Winner(db.Model):
     dt_win = db.Column(db.DateTime(timezone=True), nullable=False)
 
     # Relationship
-    account = db.Column(db.String(100), db.ForeignKey('raffles.account'))
-    winner_wallet = db.Column(db.String(100), db.ForeignKey('rafflers.wallet'))
+    account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
+    winner_wallet = db.Column(db.String(45), db.ForeignKey('rafflers.wallet'))
     # ID goes last
     id = db.Column(db.Integer, primary_key=True)
 
@@ -149,11 +150,11 @@ class Winner(db.Model):
 class NFT(db.Model):
     __tablename__ = 'nfts'
 
-    nft_mint = db.Column(db.String(100), primary_key=True)
-    name = db.Column(db.String(100))
+    nft_mint = db.Column(db.String(45), primary_key=True)
+    name = db.Column(db.String(45))
 
     # Relationship
-    collection = db.Column(db.String(100), db.ForeignKey('collections.collection_name'))
+    collection = db.Column(db.String(45), db.ForeignKey('collections.collection_name'))
 
     def __init__(self, nft_mint, name, collection):
         self.nft_mint = nft_mint
@@ -169,9 +170,9 @@ class NFT(db.Model):
 class Collection(db.Model):
     __tablename__ = 'collections'
 
-    collection_name = db.Column(db.String(100), primary_key=True)
-    collection_alias = db.Column(db.String(100))
-    collection_proper_name = db.Column(db.String(100))
+    collection_name = db.Column(db.String(45), primary_key=True)
+    collection_alias = db.Column(db.String(45))
+    collection_proper_name = db.Column(db.String(45))
 
     def __init__(self, collection_name, collection_alias, collection_proper_name):
         self.collection_name = collection_name
@@ -187,9 +188,9 @@ class Collection(db.Model):
 class Raffler(db.Model):
     __tablename__ = 'rafflers'
 
-    wallet = db.Column(db.String(100), primary_key=True)
-    twitter = db.Column(db.String(100))
-    dao_status = db.Column(db.String(100))
+    wallet = db.Column(db.String(45), primary_key=True)
+    twitter = db.Column(db.String(45))
+    dao_status = db.Column(db.String(45))
 
     def __init__(self, wallet, twitter, dao_status):
         self.wallet = wallet
@@ -210,7 +211,7 @@ class Price(db.Model):
     dt_floor = db.Column(db.DateTime(timezone=True), nullable=False)
 
     # Relationship
-    collection = db.Column(db.String(100), db.ForeignKey('collections.collection_name'))
+    collection = db.Column(db.String(45), db.ForeignKey('collections.collection_name'))
 
     # ID goes last
     id = db.Column(db.Integer, primary_key=True)
@@ -228,26 +229,26 @@ class Price(db.Model):
     class ScrapedRaffle(db.Model):
         __tablename__ = 'raffles_scraped'
 
-        account = db.Column(db.String(100))
+        account = db.Column(db.String(45))
         collection_name = db.Column(db.String(100))
         me_link = db.Column(URLType)
         name = db.Column(db.String(100))
-        floor = db.Column(db.String(100))
-        tkt_cost = db.Column(db.String(100))
+        floor = db.Column(db.Float)
+        tkt_cost = db.Column(db.String(15))
         tkt_price = db.Column(db.Float)
-        tkt_token = db.Column(db.String(100))
+        tkt_token = db.Column(db.String(15))
         tkt_sold = db.Column(db.Integer)
         tkt_total = db.Column(db.Integer)
         raffler_twitter = db.Column(db.String(100))
         dt_start = db.Column(db.DateTime(timezone=True))
-        status = db.Column(db.String(100))
-        status_text = db.Column(db.String(100))
+        status = db.Column(db.String(45))
+        status_text = db.Column(db.String(45))
         dt_scraped = db.Column(db.DateTime(timezone=True), nullable=False)
 
         # calculated/generated go last
         dt_status = db.Column(db.DateTime(timezone=True))
         tkt_remaining = db.Column(db.Integer, db.Computed("tkt_total - tkt_sold"))
-        # total_sold = db.Column(db.Float, db.Computed("tkt_sold * tkt_price"))
+        total_sales = db.Column(db.Float, db.Computed("tkt_sold * tkt_price"))
         id = db.Column(db.Integer, primary_key=True)
 
         def __init__(self, floor, dt_floor, collection):
