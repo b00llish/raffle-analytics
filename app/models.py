@@ -4,7 +4,7 @@
 
 from app.extensions import db
 # from app.extensions import login
-
+from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from sqlalchemy_utils import URLType
 
 
@@ -30,13 +30,15 @@ from sqlalchemy_utils import URLType
 class Raffle(db.Model):
     __tablename__ = 'raffles'
 
-    account = db.Column(db.String(45), primary_key=True, unique=True)
+    id = db.Column(db.Integer, primary_key=True, index=True)
+    account = db.Column(db.String(45), index=True, unique=True, nullable=False)
     dt_start = db.Column(db.DateTime(timezone=True), nullable=False)
 
     # Relationship
     host_wallet = db.Column(db.String(45), db.ForeignKey('rafflers.wallet'))
     nft_mint = db.Column(db.String(45), db.ForeignKey('nfts.nft_mint'))
 
+    buyers = db.relationship('Buy', backref='author', lazy='dynamic')
     def __init__(self, account, dt_start, host_wallet, nft_mint):
         self.account = account
         self.dt_start = dt_start
@@ -63,6 +65,8 @@ class Buy(db.Model):
 
     # ID goes last
     id = db.Column(db.Integer, primary_key=True)
+    raffle_id = db.Column(db.Integer, )
+
 
     __table_args__ = (db.UniqueConstraint(
         'dt_buy', 'amt_buy', 'account', 'buyer_wallet',
@@ -151,7 +155,7 @@ class NFT(db.Model):
     __tablename__ = 'nfts'
 
     nft_mint = db.Column(db.String(45), primary_key=True)
-    name = db.Column(db.String(45))
+    name = db.Column(db.String(120))
 
     # Relationship
     collection = db.Column(db.String(45), db.ForeignKey('collections.collection_name'))
@@ -207,7 +211,7 @@ class Price(db.Model):
     __tablename__ = 'prices'
 
     # id = db.Column(db.Integer, primary_key=True)
-    floor = db.Column(db.Float)
+    floor = db.Column(DOUBLE_PRECISION)
     dt_floor = db.Column(db.DateTime(timezone=True), nullable=False)
 
     # Relationship
@@ -233,9 +237,9 @@ class Price(db.Model):
         collection_name = db.Column(db.String(100))
         me_link = db.Column(URLType)
         name = db.Column(db.String(100))
-        floor = db.Column(db.Float)
-        tkt_cost = db.Column(db.String(15))
-        tkt_price = db.Column(db.Float)
+        floor = db.Column(db.String(45)) # TODO: update to float
+        tkt_cost = db.Column(db.String(45)) # TODO: why cant tkt_cost be length 15
+        tkt_price = db.Column(DOUBLE_PRECISION)
         tkt_token = db.Column(db.String(15))
         tkt_sold = db.Column(db.Integer)
         tkt_total = db.Column(db.Integer)
@@ -248,7 +252,7 @@ class Price(db.Model):
         # calculated/generated go last
         dt_status = db.Column(db.DateTime(timezone=True))
         tkt_remaining = db.Column(db.Integer, db.Computed("tkt_total - tkt_sold"))
-        total_sales = db.Column(db.Float, db.Computed("tkt_sold * tkt_price"))
+        total_sales = db.Column(DOUBLE_PRECISION, db.Computed("tkt_sold * tkt_price"))
         id = db.Column(db.Integer, primary_key=True)
 
         def __init__(self, floor, dt_floor, collection):

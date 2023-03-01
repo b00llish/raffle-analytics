@@ -10,10 +10,10 @@ from flask import url_for
 # from flask_login import logout_user
 # from werkzeug.urls import url_parse
 
-# from app.extensions import db
+from app.extensions import db
 # from app.forms import LoginForm
 # from app.forms import RegistrationForm
-# from app.models import User
+import app.models # import User
 
 server_bp = Blueprint('main', __name__, template_folder='templates')
 
