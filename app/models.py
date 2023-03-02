@@ -45,6 +45,7 @@ from typing import Optional
 
 from sqlalchemy.sql.schema import Sequence
 
+
 class Raffle(db.Model):
     __tablename__ = 'raffles'
 
@@ -56,7 +57,7 @@ class Raffle(db.Model):
     host_wallet = db.Column(db.String(45))
     nft_mint = db.Column(db.String(45))
 
-    buyers = relationship('Buy', back_populates='raffle')
+    buyers = relationship('Buy', backref='raffle', lazy='dynamic')
 
     def __init__(self, account, dt_start, host_wallet, nft_mint):
         self.account = account
@@ -68,18 +69,15 @@ class Raffle(db.Model):
         return f"<Raffle(id={self.id}, account='{self.account}', dt_start='{self.dt_start}', " \
                f"host_wallet='{self.host_wallet}', nft_mint='{self.nft_mint}')>"
 
-
 class Buy(db.Model):
     __tablename__ = 'buys'
 
-    dt_buy = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
-    amt_buy = db.Column(db.Float, nullable=False)
-
-    # Relationship
-    account = db.Column(db.String(45), nullable=False, index=True)
-    buyer_wallet = db.Column(db.String(45))
-
     id = db.Column(db.Integer, Sequence('buys_id_seq'), primary_key=True)
+    dt_buy = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
+    buyer_wallet = db.Column(db.String(45))
+    account = db.Column(db.String(45), nullable=False, index=True)
+
+    amt_buy = db.Column(db.Float, nullable=False)
     raffle_id = db.Column(db.Integer, db.ForeignKey('raffles.id'), nullable=False)
 
     __table_args__ = (db.UniqueConstraint(
@@ -100,28 +98,27 @@ class Buy(db.Model):
                f"raffle_id={self.raffle_id})>"
 
 
-#
-# class Cancel(db.Model):
-#     __tablename__ = 'cancels'
-#
-#     # id = db.Column(db.Integer, primary_key=True)
-#     dt_cancel = db.Column(db.DateTime(timezone=True), nullable=False)
-#
-#     # Relationship
-#     account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
-#
-#     # ID goes last
-#     id = db.Column(db.Integer, primary_key=True)
-#
-#     def __init__(self, account, dt_cancel):
-#         self.account = account
-#         self.dt_cancel = dt_cancel
-#
-#     def __repr__(self):
-#         return 'Raffle account {}, was canceled on {}.'.format(
-#             self.account, self.dt_cancel
-#         )
-#
+
+class Cancel(db.Model):
+    __tablename__ = 'cancels'
+
+    id = db.Column(db.Integer, Sequence('buys_id_seq'), primary_key=True)
+    dt_cancel = db.Column(db.DateTime(timezone=True), nullable=False)
+
+    # Relationship
+    account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
+
+    # ID goes last
+
+    def __init__(self, account, dt_cancel):
+        self.account = account
+        self.dt_cancel = dt_cancel
+
+    def __repr__(self):
+        return 'Raffle account {}, was canceled on {}.'.format(
+            self.account, self.dt_cancel
+        )
+
 #
 # class End(db.Model):
 #     __tablename__ = 'endings'
