@@ -1,3 +1,4 @@
+from __future__ import annotations
 # from flask_login import UserMixin
 # from werkzeug.security import check_password_hash
 # from werkzeug.security import generate_password_hash
@@ -6,6 +7,21 @@ from app.extensions import db
 # from app.extensions import login
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from sqlalchemy_utils import URLType
+
+from typing import List
+
+from sqlalchemy import ForeignKey
+from sqlalchemy import Integer
+
+from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import Mapped
+from sqlalchemy.orm import mapped_column
+from sqlalchemy.orm import relationship
+from typing import Optional
+
+# db.Model(DeclarativeBase)
+# class Base(DeclarativeBase):
+#     pass
 
 
 # @login.user_loader
@@ -27,130 +43,131 @@ from sqlalchemy_utils import URLType
 #     def __repr__(self):
 #         return '<User {}>'.format(self.username)
 
+from sqlalchemy.sql.schema import Sequence
+
 class Raffle(db.Model):
     __tablename__ = 'raffles'
 
-    id = db.Column(db.Integer, primary_key=True, index=True)
+    id = db.Column(db.Integer, Sequence('raffles_id_seq'), primary_key=True, index=True, unique=True, nullable=False)
     account = db.Column(db.String(45), index=True, unique=True, nullable=False)
-    dt_start = db.Column(db.DateTime(timezone=True), nullable=False)
+    dt_start = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
 
     # Relationship
-    host_wallet = db.Column(db.String(45), db.ForeignKey('rafflers.wallet'))
-    nft_mint = db.Column(db.String(45), db.ForeignKey('nfts.nft_mint'))
+    host_wallet = db.Column(db.String(45))
+    nft_mint = db.Column(db.String(45))
 
-    buyers = db.relationship('Buy', backref='author', lazy='dynamic')
+    buyers = relationship('Buy', back_populates='raffle')
+
     def __init__(self, account, dt_start, host_wallet, nft_mint):
         self.account = account
         self.dt_start = dt_start
         self.host_wallet = host_wallet
         self.nft_mint = nft_mint
 
-    # def __repr__(self):
-    #     return 'The raffle account is {}, dt_start is {}, host wallet is {}, and nft_mint is {}'.format(
-    #         self.account, self.dt_start, self.host_wallet, self.nft_mint)
-
     def __repr__(self):
-        return (self.account, self.dt_start, self.host_wallet, self.nft_mint)
+        return f"<Raffle(id={self.id}, account='{self.account}', dt_start='{self.dt_start}', " \
+               f"host_wallet='{self.host_wallet}', nft_mint='{self.nft_mint}')>"
 
 
 class Buy(db.Model):
     __tablename__ = 'buys'
 
-    dt_buy = db.Column(db.DateTime(timezone=True), nullable=False)
+    dt_buy = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
     amt_buy = db.Column(db.Float, nullable=False)
 
     # Relationship
-    account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
-    buyer_wallet = db.Column(db.String(45), db.ForeignKey('rafflers.wallet'))
+    account = db.Column(db.String(45), nullable=False, index=True)
+    buyer_wallet = db.Column(db.String(45))
 
-    # ID goes last
-    id = db.Column(db.Integer, primary_key=True)
-    raffle_id = db.Column(db.Integer, )
-
+    id = db.Column(db.Integer, Sequence('buys_id_seq'), primary_key=True)
+    raffle_id = db.Column(db.Integer, db.ForeignKey('raffles.id'), nullable=False)
 
     __table_args__ = (db.UniqueConstraint(
-        'dt_buy', 'amt_buy', 'account', 'buyer_wallet',
+        'dt_buy', 'amt_buy', 'account', 'buyer_wallet', 'raffle_id',
         name='_buy_row_uc'),
     )
 
-    def __init__(self, account, dt_buy, buyer_wallet, amt_buy):
+    def __init__(self, account, dt_buy, amt_buy, buyer_wallet, raffle_id):
         self.account = account
         self.dt_buy = dt_buy
-        self.buyer_wallet = buyer_wallet
         self.amt_buy = amt_buy
+        self.buyer_wallet = buyer_wallet
+        self.raffle_id = raffle_id
 
     def __repr__(self):
-        return 'The raffle account is {}, dt_buy is {}, buyer wallet is {}, and amt_buy is {}'.format(
-            self.account, self.dt_buy, self.buyer_wallet, self.amt_buy)
+        return f"<Buy(id={self.id}, account='{self.account}', dt_buy='{self.dt_buy}', " \
+               f"amt_buy='{round(self.amt_buy, 2)}', buyer_wallet='{self.buyer_wallet}', " \
+               f"raffle_id={self.raffle_id})>"
 
 
-class Cancel(db.Model):
-    __tablename__ = 'cancels'
-
-    # id = db.Column(db.Integer, primary_key=True)
-    dt_cancel = db.Column(db.DateTime(timezone=True), nullable=False)
-
-    # Relationship
-    account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
-
-    # ID goes last
-    id = db.Column(db.Integer, primary_key=True)
-
-    def __init__(self, account, dt_cancel):
-        self.account = account
-        self.dt_cancel = dt_cancel
-
-    def __repr__(self):
-        return 'Raffle account {}, was canceled on {}.'.format(
-            self.account, self.dt_cancel
-        )
-
-
-class End(db.Model):
-    __tablename__ = 'endings'
-
-    # id = db.Column(db.Integer, primary_key=True)
-    dt_end = db.Column(db.DateTime(timezone=True), nullable=False)
-
-    # Relationship
-    account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
-
-    # ID goes last
-    id = db.Column(db.Integer, primary_key=True)
-
-    def __init__(self, account, dt_end):
-        self.account = account
-        self.dt_end = dt_end
-
-    def __repr__(self):
-        return 'Raffle account {} ended on {}.'.format(
-            self.account, self.dt_end
-        )
-
-
-class Winner(db.Model):
-    __tablename__ = 'winners'
-
-    # id = db.Column(db.Integer, primary_key=True)
-    dt_win = db.Column(db.DateTime(timezone=True), nullable=False)
-
-    # Relationship
-    account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
-    winner_wallet = db.Column(db.String(45), db.ForeignKey('rafflers.wallet'))
-    # ID goes last
-    id = db.Column(db.Integer, primary_key=True)
-
-    def __init__(self, wallet, account, dt_win):
-        self.account = account
-        self.dt_win = dt_win
-        self.wallet = wallet
-
-    def __repr__(self):
-        return 'Raffle account {} was won by wallet {} on {}.'.format(
-            self.account, self.wallet, self.dt_win
-        )
-
-
+#
+# class Cancel(db.Model):
+#     __tablename__ = 'cancels'
+#
+#     # id = db.Column(db.Integer, primary_key=True)
+#     dt_cancel = db.Column(db.DateTime(timezone=True), nullable=False)
+#
+#     # Relationship
+#     account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
+#
+#     # ID goes last
+#     id = db.Column(db.Integer, primary_key=True)
+#
+#     def __init__(self, account, dt_cancel):
+#         self.account = account
+#         self.dt_cancel = dt_cancel
+#
+#     def __repr__(self):
+#         return 'Raffle account {}, was canceled on {}.'.format(
+#             self.account, self.dt_cancel
+#         )
+#
+#
+# class End(db.Model):
+#     __tablename__ = 'endings'
+#
+#     # id = db.Column(db.Integer, primary_key=True)
+#     dt_end = db.Column(db.DateTime(timezone=True), nullable=False)
+#
+#     # Relationship
+#     account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
+#
+#     # ID goes last
+#     id = db.Column(db.Integer, primary_key=True)
+#
+#     def __init__(self, account, dt_end):
+#         self.account = account
+#         self.dt_end = dt_end
+#
+#     def __repr__(self):
+#         return 'Raffle account {} ended on {}.'.format(
+#             self.account, self.dt_end
+#         )
+#
+#
+# class Winner(db.Model):
+#     __tablename__ = 'winners'
+#
+#     # id = db.Column(db.Integer, primary_key=True)
+#     dt_win = db.Column(db.DateTime(timezone=True), nullable=False)
+#
+#     # Relationship
+#     account = db.Column(db.String(45), db.ForeignKey('raffles.account'))
+#     winner_wallet = db.Column(db.String(45), db.ForeignKey('rafflers.wallet'))
+#     # ID goes last
+#     id = db.Column(db.Integer, primary_key=True)
+#
+#     def __init__(self, wallet, account, dt_win):
+#         self.account = account
+#         self.dt_win = dt_win
+#         self.wallet = wallet
+#
+#     def __repr__(self):
+#         return 'Raffle account {} was won by wallet {} on {}.'.format(
+#             self.account, self.wallet, self.dt_win
+#         )
+#
+#
 class NFT(db.Model):
     __tablename__ = 'nfts'
 
@@ -237,8 +254,8 @@ class Price(db.Model):
         collection_name = db.Column(db.String(100))
         me_link = db.Column(URLType)
         name = db.Column(db.String(100))
-        floor = db.Column(db.String(45)) # TODO: update to float
-        tkt_cost = db.Column(db.String(45)) # TODO: why cant tkt_cost be length 15
+        floor = db.Column(db.String(45))  # TODO: update to float
+        tkt_cost = db.Column(db.String(45))  # TODO: why cant tkt_cost be length 15
         tkt_price = db.Column(DOUBLE_PRECISION)
         tkt_token = db.Column(db.String(15))
         tkt_sold = db.Column(db.Integer)
