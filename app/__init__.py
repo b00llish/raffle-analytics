@@ -16,20 +16,20 @@ from config import Config
 
 def create_app():
     server = Flask(__name__)
-    env_config = os.getenv("APP_SETTINGS", "config.DevelopmentConfig")
-    server.config.from_object(env_config)
+    #env_config = os.getenv("APP_SETTINGS", "config.DevelopmentConfig")
+    server.config.from_object(Config)
 
     from app.dashapp1.layout import layout as layout1
     from app.dashapp1.callbacks import register_callbacks as register_callbacks1
-    register_dashapp(server, 'Dashapp 1', 'dashboard', layout1, register_callbacks1)
+    register_dashapp(server, 'Volume Quadrant', 'volume-quad', layout1, register_callbacks1)
 
-    from app.dashapp2.layout import layout as layout2
-    from app.dashapp2.callbacks import register_callbacks as register_callbacks2
-    register_dashapp(server, 'Dashapp 2', 'example', layout2, register_callbacks2)
+    # from app.dashapp2.layout import layout as layout2
+    # from app.dashapp2.callbacks import register_callbacks as register_callbacks2
+    # register_dashapp(server, 'Data Overview', 'admin-overview', layout2, register_callbacks2)
 
     register_extensions(server)
     register_blueprints(server)
-    bootstrap = Bootstrap(server)
+    Bootstrap(server)
 
     return server
 
@@ -67,15 +67,13 @@ def register_dashapp(app, title, base_pathname, layout, register_callbacks_fun):
 #
 def register_extensions(server):
     from app.extensions import db
-    #     from app.extensions import login
-    #     from app.extensions import migrate
-    #
+    # from app.extensions import login
+    from app.extensions import migrate
+
     db.init_app(server)
-
-
-#     login.init_app(server)
-#     login.login_view = 'main.login'
-#     migrate.init_app(server, db)
+#   login.init_app(server)
+#   login.login_view = 'main.login'
+    migrate.init_app(server, db)
 #
 #
 def register_blueprints(server):

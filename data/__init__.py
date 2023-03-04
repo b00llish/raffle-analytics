@@ -22,7 +22,10 @@ def OpenSQL(filename):
     return sqlFile
 
 
-def GetExistingFromDB(filename):
-    query = OpenSQL(filename)
-    df = cx.read_sql(conn=Config.SQLALCHEMY_DATABASE_URI, query=query, return_type="pandas")
+def GetExistingFromDB(filename=None, query=None):
+    if not query:
+        query = OpenSQL(filename)
+    #df = cx.read_sql(conn=Config.SQLALCHEMY_DATABASE_URI, query=query, return_type='pandas')
+    table = cx.read_sql(conn=Config.SQLALCHEMY_DATABASE_URI, query=query, return_type="arrow")
+    df = table.to_pandas(split_blocks=False, date_as_object=False)
     return df

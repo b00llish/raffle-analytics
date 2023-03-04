@@ -9,7 +9,7 @@ load_dotenv(dotenv_path)
 # SECRET_KEY = os.environ.get("SECRET_KEY")
 
 
-class Config:
+class Config(object):
     DEBUG = False
     DEVELOPMENT = False
 

@@ -7,3 +7,4 @@ venv
 
 # IDE
 .idea
+/.database_reset/1_exports/
