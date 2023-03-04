@@ -25,13 +25,13 @@ df_ends = pd.read_pickle(join(path, 'endings'))
 session = Session(bind=create_engine(Config.SQLALCHEMY_DATABASE_URI))
 
 # compile all rafflers
-filt = df_wins.winner_wallet.isin(df_rafflers.wallet)
-new_rafflers = df_wins.loc[~filt].drop_duplicates()
-new_rafflers['dao_status'] = 'amateur/non-dao'
-new_rafflers['twitter'] = 'unlinked'
-new_rafflers.rename(columns={'winner_wallet': 'wallet'}, inplace=True)
-new_rafflers = new_rafflers[['wallet', 'twitter', 'dao_status']]
-df_rafflers = pd.concat([df_rafflers, new_rafflers]).drop_duplicates()
+# filt = df_wins.winner_wallet.isin(df_rafflers.wallet)
+# new_rafflers = df_wins.loc[~filt].drop_duplicates()
+# new_rafflers['dao_status'] = 'amateur/non-dao'
+# new_rafflers['twitter'] = 'unlinked'
+# new_rafflers.rename(columns={'winner_wallet': 'wallet'}, inplace=True)
+# new_rafflers = new_rafflers[['wallet', 'twitter', 'dao_status']]
+# df_rafflers = pd.concat([df_rafflers, new_rafflers]).drop_duplicates()
 
 # Insert the df_raffles DataFrame into the raffles table
 rafflers = [Raffler(
