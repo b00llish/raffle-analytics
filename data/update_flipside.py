@@ -16,10 +16,8 @@ session = Session(bind=create_engine(Config.SQLALCHEMY_DATABASE_URI))
 basedir = abspath(dirname(__file__))
 
 # set file path
-if __name__ == '__main__':
-    path = join(basedir, 'data', 'queries')  # if pasting into pyConsole
-else:
-    path = join(basedir, 'queries')  # if running as script
+path = join(basedir, 'data', 'queries')  # if pasting into pyConsole
+# path = join(basedir, 'queries')  # if running as script
 
 
 def df_fromSQL(sqlFile):
@@ -53,6 +51,8 @@ df_buys.dt_buy = pd.to_datetime(df_buys.dt_buy).dt.tz_localize('UTC')
 all_buys = GetExistingFromDB(query='''select * from buys''')
 all_buys.dt_buy = pd.to_datetime(all_buys.dt_buy).dt.tz_localize('UTC')
 df_buys = pd.concat([df_buys, all_buys, all_buys])
+# keep relevant columns
+df_buys = df_buys[['dt_buy', 'buyer_wallet', 'account', 'amt_buy']]
 # drop all dupes to prevent errors loading in to db
 df_buys.drop_duplicates(keep=False, ignore_index=True, inplace=True)
 
@@ -125,6 +125,12 @@ session.commit()
 raffles = session.query(Raffle).all()
 raffles_dict = {raffle.account: raffle for raffle in raffles}
 
+# get accounts for all raffles
+all_raffles = GetExistingFromDB(query='''select account from raffles''')
+
+# keep buys for raffles in db
+df_buys = df_buys.loc[df_buys.account.isin(all_raffles.account)]
+
 # insert new buys
 buys = [Buy(
     account=row.account,
@@ -135,6 +141,13 @@ buys = [Buy(
     buyer_id=rafflers_dict.get(row.buyer_wallet).id
 ) for row in df_buys.itertuples(index=False)]
 
+# save & commit
+session.bulk_save_objects(buys)
+session.commit()
+
+# keep wins for raffles in db
+df_wins = df_wins.loc[df_wins.account.isin(all_raffles.account)]
+
 # insert new wins
 wins = [Winner(
     account=row.account,
@@ -144,10 +157,11 @@ wins = [Winner(
     winner_id=rafflers_dict.get(row.winner_wallet).id
 ) for row in df_wins.itertuples(index=False)]
 
-# get accounts for all raffles
-all_raffles = GetExistingFromDB(query='''select account from raffles''')
+# save & commit
+session.bulk_save_objects(wins)
+session.commit()
 
-#filter cancels
+# keep ends for raffles in db
 df_cancels = df_cancels.loc[df_cancels.account.isin(all_raffles.account)]
 
 # insert new cancels
@@ -156,6 +170,10 @@ cancels = [Cancel(
     dt_cancel=row.dt_cancel,
     raffle_id=raffles_dict.get(row.account).id
 ) for row in df_cancels.itertuples(index=False)]
+
+# save & commit
+session.bulk_save_objects(cancels)
+session.commit()
 
 # filter ends
 df_ends = df_ends.loc[df_ends.account.isin(all_raffles.account)]
@@ -167,10 +185,7 @@ ends = [End(
     dt_end=row.dt_end
 ) for row in df_ends.itertuples(index=False)]
 
-# commit
-session.bulk_save_objects(buys)
-session.bulk_save_objects(wins)
-session.bulk_save_objects(cancels)
+# save & commit
 session.bulk_save_objects(ends)
 session.commit()
 
