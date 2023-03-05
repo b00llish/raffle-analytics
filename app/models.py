@@ -7,7 +7,7 @@ from app.extensions import db
 # from app.extensions import login
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from sqlalchemy_utils import URLType
-
+from sqlalchemy import create_engine
 from typing import List
 
 from sqlalchemy import ForeignKey
@@ -44,7 +44,6 @@ from typing import Optional
 #         return '<User {}>'.format(self.username)
 
 from sqlalchemy.sql.schema import Sequence
-
 
 class Raffler(db.Model):
     __tablename__ = 'rafflers'
@@ -289,3 +288,19 @@ class Price(db.Model):
             return 'Collection:{} had floor price {} on {}.'.format(
                 self.floor, self.collection, self.dt_floor
             )
+
+    # class RaffleMetrics(db.Model):
+    #     __table__ = db.Table(
+    #         'raffle_metrics',
+    #         db.Column('date', db.Date, primary_key=True),
+    #         db.Column('raffle_count', db.Integer, nullable=False),
+    #         db.Column('raffles_net_cancels', db.Integer, nullable=False),
+    #         db.Column('raffles_bought_count', db.Integer, nullable=False),
+    #         db.Column('cancels_count', db.Integer, nullable=False),
+    #         db.Column('ends_count', db.Integer, nullable=False),
+    #         db.Column('wins_count', db.Integer, nullable=False),
+    #         schema='public',
+    #         autoload=True,
+    #         autoload_with=db.engine,
+    #         extend_existing=True,
+    #     )

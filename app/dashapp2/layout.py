@@ -1,6 +1,7 @@
 import connectorx as cx
 from data import GetExistingFromDB
-
+from os.path import join
+from data import path_queries
 from dash import dcc
 from dash import dash_table
 from dash import html
@@ -9,7 +10,7 @@ tz_used = 'America/Chicago'
 dt_begin = '2023-02-15'
 # db_conn = os.environ.get('db_uri')
 
-query = 'counts_by_day'
+query = join(path_queries, 'counts_by_day')
 df = GetExistingFromDB(query)
 
 

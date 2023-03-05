@@ -7,4 +7,7 @@ venv
 
 # IDE
 .idea
+
+# data files
 /.database_reset/1_exports/
+/.database_reset/2_transformations/

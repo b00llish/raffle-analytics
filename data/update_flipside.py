@@ -186,5 +186,8 @@ ends = [End(
 session.bulk_save_objects(ends)
 session.commit()
 
+# refresh materialized views
+session.execute(text('''REFRESH MATERIALIZED VIEW m_fact_raffles'''))
+
 # close
 session.close()
