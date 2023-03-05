@@ -1,5 +1,5 @@
 from os import environ
-from os.path import join, dirname, abspath
+from os.path import join, basename, dirname, abspath
 import pandas as pd
 from data import OpenSQL
 from shroomdk import ShroomDK
@@ -16,8 +16,10 @@ session = Session(bind=create_engine(Config.SQLALCHEMY_DATABASE_URI))
 basedir = abspath(dirname(__file__))
 
 # set file path
-path = join(basedir, 'data', 'queries')  # if pasting into pyConsole
-# path = join(basedir, 'queries')  # if running as script
+if basename(__file__) == '<input>':
+    path = join(basedir, 'data', 'queries')  # if pasting into pyConsole
+else:
+    path = join(basedir, 'queries')  # if running as script
 
 
 def df_fromSQL(sqlFile):
@@ -26,11 +28,6 @@ def df_fromSQL(sqlFile):
     df = pd.DataFrame.from_dict(query_result_set.records)
     return df
 
-
-# get existing data
-# all_rafflers = session.query(Raffler).all()
-# all_raffles = session.query(Raffle).all()
-# all_buys = session.query(Buy).all()
 
 # create dict for mapping
 rafflers = session.query(Raffler).all()
