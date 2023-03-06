@@ -7,7 +7,7 @@ from app.extensions import db
 # from app.extensions import login
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from sqlalchemy_utils import URLType
-
+from sqlalchemy import create_engine
 from typing import List
 
 from sqlalchemy import ForeignKey
@@ -17,6 +17,8 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import outerjoin
+from sqlalchemy.ext.hybrid import hybrid_property
 from typing import Optional
 
 # db.Model(DeclarativeBase)
@@ -44,7 +46,8 @@ from typing import Optional
 #         return '<User {}>'.format(self.username)
 
 from sqlalchemy.sql.schema import Sequence
-
+from app.materialized_view_factory import create_mat_view, MaterializedView
+# from migrations.helpers import immutable_date_trunc
 
 class Raffler(db.Model):
     __tablename__ = 'rafflers'
@@ -75,6 +78,7 @@ class Raffle(db.Model):
     account = db.Column(db.String(45), index=True, unique=True, nullable=False)
     dt_start = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
     host_wallet = db.Column(db.String(45))
+    # dt_start_trunc = db.Column(db.DateTime(), db.Computed("db.func.date_trunc('day', dt_start)"))
 
     # Relationship
     nft_mint = db.Column(db.String(45))
@@ -83,6 +87,17 @@ class Raffle(db.Model):
     canceled = relationship('Cancel', backref='raffle', lazy='dynamic')
     ended = relationship('End', backref='raffle', lazy='dynamic')
     winner = relationship('Winner', backref='raffle', lazy='dynamic')
+
+    # mv_data_overview = db.relationship('DataOverview', backref='raffle',
+    #                                    uselist=False,  # makes it a one-to-one relationship
+    #                                    primaryjoin="Raffle.dt_start_trunc==DataOverview.dt_start",
+    #                                    foreign_keys='DataOverview.dt_start',
+    #                                    lazy='dynamic')
+
+    # @hybrid_property
+    # def raffle_count(self):
+    #     if self.mv_data_overview is not None:  # if None, mv_data_overview needs refreshing
+    #         return self.mv_data_overview.raffle_count
 
     def __init__(self, account, dt_start, host_wallet, nft_mint, host_id):
         self.account = account
@@ -94,7 +109,6 @@ class Raffle(db.Model):
     def __repr__(self):
         return f"Raffle(id={self.id}, account='{self.account}', dt_start='{self.dt_start}', " \
                f"host_wallet='{self.host_wallet}', nft_mint='{self.nft_mint}')"
-
 
 
 class Buy(db.Model):
@@ -169,7 +183,6 @@ class End(db.Model):
                f"dt_end='{self.dt_end}', raffle_id={self.raffle_id})"
 
 
-
 class Winner(db.Model):
     __tablename__ = 'winners'
 
@@ -220,6 +233,7 @@ class Collection(db.Model):
     collection_name = db.Column(db.String(45), primary_key=True)
     collection_alias = db.Column(db.String(45))
     collection_proper_name = db.Column(db.String(45))
+    id = db.Column(db.Integer, Sequence('collections_id_seq'))
 
     def __init__(self, collection_name, collection_alias, collection_proper_name):
         self.collection_name = collection_name
@@ -255,37 +269,79 @@ class Price(db.Model):
             self.floor, self.collection, self.dt_floor
         )
 
-    class ScrapedRaffle(db.Model):
-        __tablename__ = 'raffles_scraped'
 
-        account = db.Column(db.String(45))
-        collection_name = db.Column(db.String(100))
-        me_link = db.Column(URLType)
-        name = db.Column(db.String(100))
-        floor = db.Column(db.String(45))  # TODO: update to float
-        tkt_cost = db.Column(db.String(45))  # TODO: why cant tkt_cost be length 15
-        tkt_price = db.Column(DOUBLE_PRECISION)
-        tkt_token = db.Column(db.String(15))
-        tkt_sold = db.Column(db.Integer)
-        tkt_total = db.Column(db.Integer)
-        raffler_twitter = db.Column(db.String(100))
-        dt_start = db.Column(db.DateTime(timezone=True))
-        status = db.Column(db.String(45))
-        status_text = db.Column(db.String(45))
-        dt_scraped = db.Column(db.DateTime(timezone=True), nullable=False)
+class ScrapedRaffle(db.Model):
+    __tablename__ = 'raffles_scraped'
 
-        # calculated/generated go last
-        dt_status = db.Column(db.DateTime(timezone=True))
-        tkt_remaining = db.Column(db.Integer, db.Computed("tkt_total - tkt_sold"))
-        total_sales = db.Column(DOUBLE_PRECISION, db.Computed("tkt_sold * tkt_price"))
-        id = db.Column(db.Integer, primary_key=True)
+    account = db.Column(db.String(45))
+    collection_name = db.Column(db.String(100))
+    me_link = db.Column(URLType)
+    name = db.Column(db.String(100))
+    floor = db.Column(db.String(45))  # TODO: update to float
+    tkt_cost = db.Column(db.String(45))  # TODO: why cant tkt_cost be length 15
+    tkt_price = db.Column(DOUBLE_PRECISION)
+    tkt_token = db.Column(db.String(15))
+    tkt_sold = db.Column(db.Integer)
+    tkt_total = db.Column(db.Integer)
+    raffler_twitter = db.Column(db.String(100))
+    dt_start = db.Column(db.DateTime(timezone=True))
+    status = db.Column(db.String(45))
+    status_text = db.Column(db.String(45))
+    dt_scraped = db.Column(db.DateTime(timezone=True), nullable=False)
 
-        def __init__(self, floor, dt_floor, collection):
-            self.floor = floor
-            self.dt_floor = dt_floor
-            self.collection = collection
+    # calculated/generated go last
+    dt_status = db.Column(db.DateTime(timezone=True))
+    tkt_remaining = db.Column(db.Integer, db.Computed("tkt_total - tkt_sold"))
+    total_sales = db.Column(DOUBLE_PRECISION, db.Computed("tkt_sold * tkt_price"))
+    id = db.Column(db.Integer, primary_key=True)
 
-        def __repr__(self):
-            return 'Collection:{} had floor price {} on {}.'.format(
-                self.floor, self.collection, self.dt_floor
-            )
+    def __init__(self, floor, dt_floor, collection):
+        self.floor = floor
+        self.dt_floor = dt_floor
+        self.collection = collection
+
+    def __repr__(self):
+        return 'Collection:{} had floor price {} on {}.'.format(
+            self.floor, self.collection, self.dt_floor
+        )
+
+
+DataOverview_name = "data_overview"
+DataOverview_selectable = db.select(
+
+    db.func.date_trunc('day', Raffle.dt_start).label('dt_start'),
+    db.func.count(db.func.distinct(Raffle.account)).label('raffle_count'),
+    db.func.count(db.func.distinct(Buy.account)).label('buy_count'),
+    db.func.count(db.func.distinct(Cancel.account)).label('cancel_count'),
+    db.func.count(db.func.distinct(End.account)).label('end_count'),
+    db.func.count(db.func.distinct(Winner.account)).label('win_count'),
+    (db.func.count(db.func.distinct(Raffle.account)
+                  ) - db.func.count(
+        db.func.distinct(Cancel.account))).label('raffles_net_cancels'),  # .label('raffles_net_cancels')
+).select_from(
+    outerjoin(Raffle, Buy, Raffle.id == Buy.raffle_id)
+    .outerjoin(Cancel, Raffle.id == Cancel.raffle_id)
+    .outerjoin(End, Raffle.id == End.raffle_id)
+    .outerjoin(Winner, Raffle.id == Winner.raffle_id)
+    # db.join(Winner, isouter=True),
+).group_by(db.func.date_trunc('day', Raffle.dt_start))
+
+
+# DataOverview_index = db.Index('data_overview_date_idx', db.func.date_trunc('day', Raffle.dt_start), unique=True)
+class DataOverview(MaterializedView):
+    __table__ = create_mat_view(DataOverview_name, DataOverview_selectable)
+
+
+db.Index('data_overview_date_idx', DataOverview.dt_start, unique=True)
+
+# Raffle.mv_data_overview = db.relationship(
+#     'DataOverview',
+#     backref='raffle',
+#     #uselist=False,  # makes it a one-to-one relationship
+#     primaryjoin='Raffle.dt_start_trunc == DataOverview.dt_start',
+#     foreign_keys=DataOverview.dt_start,
+#     lazy='dynamic'
+# )
+
+# DataOverview_index = db.Index('data_overview_date_idx', 'DataOverview.dt_start', unique=True)
+# DataOverview_index

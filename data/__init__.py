@@ -1,17 +1,16 @@
 import os
 import pandas as pd
 import connectorx as cx
-
 from config import Config
-
-from dotenv import load_dotenv
 from os.path import join, basename, dirname, abspath
 
 basedir = abspath(dirname(__file__))
 
-# dotenv_path = join(basedir, '.env')
-# load_dotenv(dotenv_path)
-
+# set file path
+if basename(__file__) == '<input>':
+    path_queries = join(basedir, 'data', 'queries')  # if pasting into pyConsole
+else:
+    path_queries = join(basedir, 'queries')  # if running as script
 
 def OpenSQL(filename):
     queries_path = join(basedir, 'queries')

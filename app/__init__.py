@@ -23,9 +23,9 @@ def create_app():
     from app.dashapp1.callbacks import register_callbacks as register_callbacks1
     register_dashapp(server, 'Volume Quadrant', 'volume-quad', layout1, register_callbacks1)
 
-    # from app.dashapp2.layout import layout as layout2
-    # from app.dashapp2.callbacks import register_callbacks as register_callbacks2
-    # register_dashapp(server, 'Data Overview', 'admin-overview', layout2, register_callbacks2)
+    from app.dashapp2.layout import layout as layout2
+    from app.dashapp2.callbacks import register_callbacks as register_callbacks2
+    register_dashapp(server, 'Data Overview', 'admin-overview', layout2, register_callbacks2)
 
     register_extensions(server)
     register_blueprints(server)
