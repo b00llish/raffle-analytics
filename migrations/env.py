@@ -5,6 +5,10 @@ from flask import current_app
 
 from alembic import context
 
+from alembic_utils.replaceable_entity import register_entities
+
+from migrations.mat_view_registry import mv_data_overview
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -14,6 +18,8 @@ config = context.config
 fileConfig(config.config_file_name)
 logger = logging.getLogger('alembic.env')
 
+# registers material views in mat_view_registry.py
+register_entities([mv_data_overview])
 
 def get_engine():
     try:
