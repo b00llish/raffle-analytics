@@ -13,6 +13,7 @@ from app.extensions import db
 import sqlalchemy as sa
 from alembic import op
 
+
 class CreateMaterializedView(DDLElement):
     def __init__(self, name, selectable):
         self.name = name
@@ -26,31 +27,8 @@ def compile(element, compiler, **kw):
     return 'CREATE MATERIALIZED VIEW %s AS %s' % (
         element.name,
         compiler.sql_compiler.process(element.selectable, literal_binds=True),
-        )
+    )
 
-
-# def create_mat_view(name, selectable, metadata=db.metadata, alembic_op=None):
-#     _mt = db.MetaData()  # temp metadata just for initial Table object creation
-#     t = db.Table(name, _mt)  # the actual mat view class is bound to db.metadata
-#     for c in selectable.c:
-#         # explicitly set the type of the 'date' column to DateTime
-#         if c.name == 'date':
-#             t.append_column(db.Column(c.name, sa.DateTime(), primary_key=c.primary_key))
-#         else:
-#             t.append_column(db.Column(c.name, c.type, primary_key=c.primary_key))
-#
-#     if not (any([c.primary_key for c in selectable.c])):
-#         t.append_constraint(PrimaryKeyConstraint(*[c.name for c in selectable.c]))
-#
-#     if alembic_op is not None:
-#         alembic_op.create(CreateMaterializedView(name, selectable))(
-#             name,
-#             *t.columns,
-#             extend_existing=True,
-#             postgresql_ignore_search_path=True,
-#         )
-#
-#     return t
 
 def create_mat_view(name, selectable, metadata=db.metadata):
     _mt = db.MetaData()  # temp metadata just for initial Table object creation
@@ -64,7 +42,7 @@ def create_mat_view(name, selectable, metadata=db.metadata):
     db.event.listen(
         metadata, 'after_create',
         CreateMaterializedView(name, selectable)
-        )
+    )
 
     @db.event.listens_for(metadata, 'after_create')
     def create_indexes(target, connection, **kw):
@@ -74,7 +52,7 @@ def create_mat_view(name, selectable, metadata=db.metadata):
     db.event.listen(
         metadata, 'before_drop',
         db.DDL('DROP MATERIALIZED VIEW IF EXISTS ' + name)
-        )
+    )
     return t
 
 

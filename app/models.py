@@ -17,6 +17,8 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import outerjoin
+from sqlalchemy.ext.hybrid import hybrid_property
 from typing import Optional
 
 # db.Model(DeclarativeBase)
@@ -45,7 +47,7 @@ from typing import Optional
 
 from sqlalchemy.sql.schema import Sequence
 from app.materialized_view_factory import create_mat_view, MaterializedView
-
+# from migrations.helpers import immutable_date_trunc
 
 class Raffler(db.Model):
     __tablename__ = 'rafflers'
@@ -76,6 +78,7 @@ class Raffle(db.Model):
     account = db.Column(db.String(45), index=True, unique=True, nullable=False)
     dt_start = db.Column(db.DateTime(timezone=True), nullable=False, index=True)
     host_wallet = db.Column(db.String(45))
+    # dt_start_trunc = db.Column(db.DateTime(), db.Computed("db.func.date_trunc('day', dt_start)"))
 
     # Relationship
     nft_mint = db.Column(db.String(45))
@@ -84,6 +87,17 @@ class Raffle(db.Model):
     canceled = relationship('Cancel', backref='raffle', lazy='dynamic')
     ended = relationship('End', backref='raffle', lazy='dynamic')
     winner = relationship('Winner', backref='raffle', lazy='dynamic')
+
+    # mv_data_overview = db.relationship('DataOverview', backref='raffle',
+    #                                    uselist=False,  # makes it a one-to-one relationship
+    #                                    primaryjoin="Raffle.dt_start_trunc==DataOverview.dt_start",
+    #                                    foreign_keys='DataOverview.dt_start',
+    #                                    lazy='dynamic')
+
+    # @hybrid_property
+    # def raffle_count(self):
+    #     if self.mv_data_overview is not None:  # if None, mv_data_overview needs refreshing
+    #         return self.mv_data_overview.raffle_count
 
     def __init__(self, account, dt_start, host_wallet, nft_mint, host_id):
         self.account = account
@@ -220,6 +234,7 @@ class Collection(db.Model):
     collection_alias = db.Column(db.String(45))
     collection_proper_name = db.Column(db.String(45))
     id = db.Column(db.Integer, Sequence('collections_id_seq'))
+
     def __init__(self, collection_name, collection_alias, collection_proper_name):
         self.collection_name = collection_name
         self.collection_alias = collection_alias
@@ -290,38 +305,43 @@ class ScrapedRaffle(db.Model):
             self.floor, self.collection, self.dt_floor
         )
 
+
+DataOverview_name = "data_overview"
+DataOverview_selectable = db.select(
+
+    db.func.date_trunc('day', Raffle.dt_start).label('dt_start'),
+    db.func.count(db.func.distinct(Raffle.account)).label('raffle_count'),
+    db.func.count(db.func.distinct(Buy.account)).label('buy_count'),
+    db.func.count(db.func.distinct(Cancel.account)).label('cancel_count'),
+    db.func.count(db.func.distinct(End.account)).label('end_count'),
+    db.func.count(db.func.distinct(Winner.account)).label('win_count'),
+    (db.func.count(db.func.distinct(Raffle.account)
+                  ) - db.func.count(
+        db.func.distinct(Cancel.account))).label('raffles_net_cancels'),  # .label('raffles_net_cancels')
+).select_from(
+    outerjoin(Raffle, Buy, Raffle.id == Buy.raffle_id)
+    .outerjoin(Cancel, Raffle.id == Cancel.raffle_id)
+    .outerjoin(End, Raffle.id == End.raffle_id)
+    .outerjoin(Winner, Raffle.id == Winner.raffle_id)
+    # db.join(Winner, isouter=True),
+).group_by(db.func.date_trunc('day', Raffle.dt_start))
+
+
+# DataOverview_index = db.Index('data_overview_date_idx', db.func.date_trunc('day', Raffle.dt_start), unique=True)
 class DataOverview(MaterializedView):
-    __table__ = create_mat_view("data_overview",
-                                db.select(
-                                    db.func.date_trunc('day', Raffle.dt_start),
-                                    db.func.count(db.func.distinct(Raffle.account)),  # .label('raffle_count')
-                                ).select_from(Raffle
-                                    # db.join(Raffle, Buy, isouter=True))
+    __table__ = create_mat_view(DataOverview_name, DataOverview_selectable)
 
-                                ).group_by(db.func.date_trunc('day', Raffle.dt_start)))# .label('date'))
 
-# db.Index('data_overview_date_idx', db.func.date_trunc('day', Raffle.dt_start), unique=True)
+db.Index('data_overview_date_idx', DataOverview.dt_start, unique=True)
 
-# db.Index('gear_item_mv_id_idx', GearItemMV.id, unique=True)
-    # = create_mat_view("gear_item_mv",
-    #                   db.select(
-    #                       [GearItem.id.label('id'),
-    #                        db.func.count(GearReview.id).label('review_count'),
-    #                        db.func.avg(GearReview.rating).label('review_rating'), ]
-    #                   ).select_from(db.join(GearItem, GearReview, isouter=True)
-    #                                 ).group_by(GearItem.id))
-    # class RaffleMetrics(db.Model):
-    #     __table__ = db.Table(
-    #         'raffle_metrics',
-    #         db.Column('date', db.Date, primary_key=True),
-    #         db.Column('raffle_count', db.Integer, nullable=False),
-    #         db.Column('raffles_net_cancels', db.Integer, nullable=False),
-    #         db.Column('raffles_bought_count', db.Integer, nullable=False),
-    #         db.Column('cancels_count', db.Integer, nullable=False),
-    #         db.Column('ends_count', db.Integer, nullable=False),
-    #         db.Column('wins_count', db.Integer, nullable=False),
-    #         schema='public',
-    #         autoload=True,
-    #         autoload_with=db.engine,
-    #         extend_existing=True,
-    #     )
+# Raffle.mv_data_overview = db.relationship(
+#     'DataOverview',
+#     backref='raffle',
+#     #uselist=False,  # makes it a one-to-one relationship
+#     primaryjoin='Raffle.dt_start_trunc == DataOverview.dt_start',
+#     foreign_keys=DataOverview.dt_start,
+#     lazy='dynamic'
+# )
+
+# DataOverview_index = db.Index('data_overview_date_idx', 'DataOverview.dt_start', unique=True)
+# DataOverview_index

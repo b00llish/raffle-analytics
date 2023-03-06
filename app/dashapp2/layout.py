@@ -1,4 +1,3 @@
-import connectorx as cx
 from data import GetExistingFromDB
 from os.path import join
 from data import path_queries
@@ -10,9 +9,13 @@ tz_used = 'America/Chicago'
 dt_begin = '2023-02-15'
 # db_conn = os.environ.get('db_uri')
 
-query = join(path_queries, 'counts_by_day')
-df = GetExistingFromDB(query)
-
+# filename = join(path_queries, 'counts_by_day')
+query = 'select * from data_overview'
+df = GetExistingFromDB(query=query)
+df.rename(columns={
+    'dt_start': 'date',
+    'raffles_net_cancels': 'Total Raffles'
+}, inplace=True)
 
 def create_tab(content, label, value):
     return dcc.Tab(
