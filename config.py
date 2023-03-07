@@ -17,6 +17,7 @@ class Config(object):
         'postgres://', 'postgresql://')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.environ['SECRET_KEY']
+    SHROOM_KEY = os.environ['SHROOM_KEY_1']
 
 
 class ProductionConfig(Config):

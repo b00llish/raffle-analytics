@@ -310,6 +310,7 @@ DataOverview_name = "data_overview"
 DataOverview_selectable = db.select(
 
     db.func.date_trunc('day', Raffle.dt_start).label('dt_start'),
+    db.func.max( Raffle.dt_start).label('max_dt'),
     db.func.count(db.func.distinct(Raffle.account)).label('raffle_count'),
     db.func.count(db.func.distinct(Buy.account)).label('buy_count'),
     db.func.count(db.func.distinct(Cancel.account)).label('cancel_count'),
@@ -332,7 +333,7 @@ class DataOverview(MaterializedView):
     __table__ = create_mat_view(DataOverview_name, DataOverview_selectable)
 
 
-db.Index('data_overview_date_idx', DataOverview.dt_start, unique=True)
+db.Index('idx_data_overview_date', DataOverview.dt_start, unique=True)
 
 # Raffle.mv_data_overview = db.relationship(
 #     'DataOverview',
