@@ -4,6 +4,8 @@ from data import path_queries
 from dash import dcc
 from dash import dash_table
 from dash import html
+import connectorx as cx
+from config import Config
 
 tz_used = 'America/Chicago'
 dt_begin = '2023-02-15'
@@ -11,7 +13,9 @@ dt_begin = '2023-02-15'
 
 # filename = join(path_queries, 'counts_by_day')
 query = '''select * from data_overview'''
-df = GetExistingFromDB(query=query)
+# df = GetExistingFromDB(query=query)
+table = cx.read_sql(conn=Config.SQLALCHEMY_DATABASE_URI, query=query, return_type="arrow")
+df = table.to_pandas(split_blocks=False, date_as_object=False)
 df.rename(columns={
     'dt_start': 'date',
     'raffles_net_cancels': 'Total Raffles'
