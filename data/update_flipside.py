@@ -27,7 +27,7 @@ else:
 
 def df_fromSQL(sqlFile):
     file = OpenSQL(sqlFile)
-    query_result_set = sdk.query(file, ttl_minutes=10)
+    query_result_set = sdk.query(file, ttl_minutes=12)
     df = pd.DataFrame.from_dict(query_result_set.records)
     return df
 
