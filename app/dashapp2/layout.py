@@ -10,7 +10,7 @@ dt_begin = '2023-02-15'
 # db_conn = os.environ.get('db_uri')
 
 # filename = join(path_queries, 'counts_by_day')
-query = 'select * from data_overview'
+query = '''select * from data_overview'''
 df = GetExistingFromDB(query=query)
 df.rename(columns={
     'dt_start': 'date',
