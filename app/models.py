@@ -12,7 +12,7 @@ from typing import List
 
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
-
+from sqlalchemy.sql import alias
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -348,7 +348,10 @@ db.Index('idx_data_overview_date', DataOverview.dt_start, unique=True)
 
 FactRaffles_name = "fact_raffles"
 
+# raffler_b = rafflers.alias('b')
+
 FactRaffles_selectable = db.select(
+    Raffle.id.label('raffle_id'),
     Raffle.dt_start.label('start_date'),
     End.dt_end.label('end_date'),
     Raffle.account.label('account'),

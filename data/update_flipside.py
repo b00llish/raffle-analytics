@@ -197,7 +197,11 @@ session.commit()
 print('committed all data')
 # refresh materialized views
 session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.data_overview WITH DATA;'''))
-print('refreshed data overview')
+print('refreshed mv: data overview')
+session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.fact_raffles WITH DATA;'''))
+print('refreshed mv: fact_raffles')
+session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.total_sales WITH DATA;'''))
+print('refreshed mv: total sales')
 # close
 session.close()
 print('session closed')
