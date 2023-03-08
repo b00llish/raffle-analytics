@@ -1,8 +1,8 @@
-"""testing FactRaffles MV
+"""working through basic draft of factraffles mv
 
-Revision ID: 265afdff3e76
+Revision ID: bdf3a0e58992
 Revises: 7123f5b7a41b
-Create Date: 2023-03-07 13:10:35.075612
+Create Date: 2023-03-07 20:47:30.749726
 
 """
 from alembic import op
@@ -11,7 +11,7 @@ from alembic_utils.pg_materialized_view import PGMaterializedView
 from sqlalchemy import text as sql_text
 
 # revision identifiers, used by Alembic.
-revision = '265afdff3e76'
+revision = 'bdf3a0e58992'
 down_revision = '7123f5b7a41b'
 branch_labels = None
 depends_on = None
@@ -22,7 +22,7 @@ def upgrade():
     public_fact_raffles = PGMaterializedView(
                 schema="public",
                 signature="fact_raffles",
-                definition='SELECT raffles.dt_start AS "Start Date", raffles.account AS "Account", rafflers.twitter AS "Host Name", sum(buys.amt_buy) AS total_sales \nFROM raffles LEFT OUTER JOIN cancels ON raffles.id = cancels.raffle_id LEFT OUTER JOIN endings ON raffles.id = endings.raffle_id LEFT OUTER JOIN buys ON raffles.id = buys.raffle_id LEFT OUTER JOIN winners ON raffles.id = winners.raffle_id, rafflers \nWHERE raffles.id != cancels.raffle_id GROUP BY raffles.dt_start, raffles.account, rafflers.twitter',
+                definition='SELECT raffles.dt_start AS "Start Date", raffles.account AS "Account", rafflers.twitter AS "Host Name" \nFROM raffles LEFT OUTER JOIN cancels ON raffles.id = cancels.raffle_id LEFT OUTER JOIN endings ON raffles.id = endings.raffle_id LEFT OUTER JOIN winners ON raffles.id = winners.raffle_id LEFT OUTER JOIN rafflers ON raffles.host_id = rafflers.id \nWHERE cancels.account IS NULL GROUP BY raffles.dt_start, raffles.account, rafflers.twitter',
                 with_data=True
             )
 

@@ -7,7 +7,7 @@ from alembic import context
 
 from alembic_utils.replaceable_entity import register_entities
 
-from migrations.mat_view_registry import mv_data_overview, mv_fact_raffles
+from migrations.mat_view_registry import mv_data_overview, mv_fact_raffles, mv_total_sales
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -19,7 +19,7 @@ fileConfig(config.config_file_name)
 logger = logging.getLogger('alembic.env')
 
 # registers material views in mat_view_registry.py
-register_entities([mv_data_overview, mv_fact_raffles])
+register_entities([mv_data_overview, mv_fact_raffles, mv_total_sales])
 
 def get_engine():
     try:
