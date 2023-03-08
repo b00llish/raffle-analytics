@@ -1,6 +1,4 @@
-from data import GetExistingFromDB
-from os.path import join
-from data import path_queries
+# from data import GetExistingFromDB
 from dash import dcc
 from dash import dash_table
 from dash import html
@@ -9,11 +7,9 @@ from config import Config
 
 tz_used = 'America/Chicago'
 dt_begin = '2023-02-15'
-# db_conn = os.environ.get('db_uri')
 
-# filename = join(path_queries, 'counts_by_day')
 query = '''select * from data_overview'''
-# df = GetExistingFromDB(query=query)
+
 table = cx.read_sql(conn=Config.SQLALCHEMY_DATABASE_URI, query=query, return_type="arrow")
 df = table.to_pandas(split_blocks=False, date_as_object=False)
 df.rename(columns={
@@ -94,3 +90,5 @@ layout = html.Div(children=[
     html.Div(top_bar),
     html.Div([table_tabs])
 ])
+
+# df = GetExistingFromDB(query=query)
