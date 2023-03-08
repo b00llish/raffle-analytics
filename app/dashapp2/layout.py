@@ -8,9 +8,9 @@ from config import Config
 tz_used = 'America/Chicago'
 dt_begin = '2023-02-15'
 
-query = '''select * from data_overview'''
+# query = '''select * from data_overview'''
 
-table = cx.read_sql(conn=Config.SQLALCHEMY_DATABASE_URI, query=query, return_type="arrow")
+table = cx.read_sql(conn=Config.SQLALCHEMY_DATABASE_URI, query='''select * from data_overview''', return_type="arrow")
 df = table.to_pandas(split_blocks=False, date_as_object=False)
 df.rename(columns={
     'dt_start': 'date',
