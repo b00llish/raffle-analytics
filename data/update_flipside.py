@@ -202,6 +202,9 @@ session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.fact_raffl
 print('refreshed mv: fact_raffles')
 session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.total_sales WITH DATA;'''))
 print('refreshed mv: total sales')
+session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.fact_buys WITH DATA;'''))
+print('refreshed mv: fact_buys')
+
 # close
 session.close()
 print('session closed')

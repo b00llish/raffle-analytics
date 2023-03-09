@@ -341,14 +341,7 @@ class DataOverview(MaterializedView):
 
 db.Index('idx_data_overview_date', DataOverview.dt_start, unique=True)
 
-# table_list = [Cancel, End, Winner]
-# tables = outerjoin(Raffle, Raffler, Raffle.host_id == Raffler.id)
-# for t in table_list:
-#     tables = tables.outerjoin(t, Raffle.id == t.raffle_id)
-
 FactRaffles_name = "fact_raffles"
-
-# raffler_b = rafflers.alias('b')
 
 FactRaffles_selectable = db.select(
     Raffle.id.label('raffle_id'),
@@ -366,12 +359,7 @@ FactRaffles_selectable = db.select(
     .outerjoin(Raffler, Raffle.host_id == Raffler.id)
 ).where(
     Cancel.account == None
-)  # .group_by(
-
-
-#     Raffle.dt_start, End.dt_end, Raffle.account, Raffler.twitter,
-#     Raffler.dao_status, Winner.winner_wallet
-# )
+)
 
 class FactRaffles(MaterializedView):
     __table__ = create_mat_view(FactRaffles_name, FactRaffles_selectable)
@@ -399,3 +387,23 @@ class TotalSales(MaterializedView):
 
 
 db.Index('idx_total_sales_id', TotalSales.raffle_id, unique=True)
+
+FactBuys_name = "fact_buys"
+
+FactBuys_selectable = db.select(
+    Buy.dt_buy.label('date_buy'),
+    Buy.amt_buy.label('amount_buy'),
+    Buy.buyer_wallet.label('buyer_wallet'),
+    Raffler.twitter.label('buyer_name'),
+    Raffler.dao_status.label('buyer_dao_status'),
+    Buy.raffle_id.label('raffle_id'),
+    Buy.id.label('buy_id')
+
+).select_from(
+    outerjoin(Buy, Raffler, Buy.buyer_id == Raffler.id)
+
+)
+
+
+class FactBuys(MaterializedView):
+    __table__ = create_mat_view(FactBuys_name, FactBuys_selectable)
