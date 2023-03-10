@@ -4,7 +4,7 @@ from config import Config
 
 def getdata():
     # get data and keep relevant columns
-    query='''SELECT * FROM fact_buys b LEFT JOIN fact_raffles r on b.raffle_id = r.raffle_id'''
+    query='''SELECT * FROM public.fact_buys b LEFT JOIN public.fact_raffles r on b.raffle_id = r.raffle_id'''
     data = cx.read_sql(conn=Config.QUERY_DATABASE_URI, query=query, return_type="pandas")
 
     # calculate buy volume
