@@ -40,17 +40,19 @@ print('got rafflers dict')
 sqlFile = join(path, 'raffles_flipside')
 print(sqlFile)
 df_raffles = df_fromSQL(sqlFile=sqlFile)
-print('got result from flipside')
+print('got raffles from flipside')
 df_raffles.dt_start = pd.to_datetime(df_raffles.dt_start).dt.tz_localize('UTC')
 all_raffles = GetExistingFromDB(query='''select account from raffles''')
+print('got raffles from db')
 filt = df_raffles.account.isin(all_raffles.account)
 df_raffles = df_raffles.loc[~filt]
-print('got new raffles')
 # get new buys
 sqlFile = join(path, 'buys_flipside')
 df_buys = df_fromSQL(sqlFile=sqlFile)
+print('got buys from flipside')
 df_buys.dt_buy = pd.to_datetime(df_buys.dt_buy).dt.tz_localize('UTC')
 all_buys = GetExistingFromDB(query='''select * from buys''')
+print('got buys from db')
 all_buys.dt_buy = pd.to_datetime(all_buys.dt_buy).dt.tz_localize('UTC')
 df_buys = pd.concat([df_buys, all_buys, all_buys])
 # keep relevant columns
@@ -61,27 +63,33 @@ print('got new buys')
 # get new wins
 sqlFile = join(path, 'wins_flipside')
 df_wins = df_fromSQL(sqlFile=sqlFile)
+print('got wins from flipside')
 df_wins.dt_win = pd.to_datetime(df_wins.dt_win).dt.tz_localize('UTC')
 all_winners = GetExistingFromDB(query='''select account from winners''')
+print('got wins from db')
 filt = df_wins.account.isin(all_winners.account)
 df_wins = df_wins.loc[~filt]
 print('got new wins')
 # get new ends
 sqlFile = join(path, 'ends_flipside')
 df_ends = df_fromSQL(sqlFile=sqlFile)
+print('got ends from flipside')
 df_ends.dt_end = pd.to_datetime(df_ends.dt_end).dt.tz_localize('UTC')
 all_endings = GetExistingFromDB(query='''select account from endings''')
+print('got endings from db')
 filt = df_ends.account.isin(all_endings.account)
 df_ends = df_ends.loc[~filt]
-
+print('got new ends')
 # get new cancels
 sqlFile = join(path, 'cancels_flipside')
 df_cancels = df_fromSQL(sqlFile=sqlFile)
+print('got cancels from flipside')
 df_cancels.dt_cancel = pd.to_datetime(df_cancels.dt_cancel).dt.tz_localize('UTC')
 all_cancels = GetExistingFromDB(query='''select account from cancels''')
+print('got cancels from db')
 filt = df_cancels.account.isin(all_cancels.account)
 df_cancels = df_cancels.loc[~filt]
-print('finished querying data')
+print('got new cancels - finished querying data')
 # determine rafflers to add
 all_rafflers = GetExistingFromDB(query='''select wallet from rafflers''')
 new_rafflers = pd.concat([df_raffles.host_wallet, df_buys.buyer_wallet, df_wins.winner_wallet])
