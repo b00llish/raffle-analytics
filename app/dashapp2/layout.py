@@ -57,7 +57,7 @@ def register_callbacks(dashapp):
         Output('my-output', 'children'),
         Input('update-overview-data-btn', 'n_clicks')
     )
-    def update_graph(n, x):
+    def update_graph(n):
         ctx_msg = json.dumps({
             'states': ctx.states,
             'triggered': ctx.triggered,
