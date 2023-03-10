@@ -10,7 +10,7 @@ from config import Config
 from data import GetExistingFromDB
 
 sdk = ShroomDK(Config.SHROOM_KEY)
-session = Session(bind=create_engine(Config.SQLALCHEMY_DATABASE_URI))
+session = Session(bind=create_engine(Config.UPDATE_DATABASE_URI))
 
 # open files
 basedir = abspath(dirname(__file__))
