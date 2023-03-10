@@ -19,7 +19,7 @@ SELECT
     solana.core.fact_transactions t
   WHERE
     -- date range for data:
-    date_trunc('day', dt_start) > CURRENT_DATE - interval '1 days'
+    date_trunc('day', dt_start) > CURRENT_DATE - interval '3 days'
     -- date_trunc('day', dt_start) >= '2023-01-18' -- inclusive
     -- AND date_trunc('day', dt_start) < '2023-01-01' --exclusive
     -- Get rafffle program info:

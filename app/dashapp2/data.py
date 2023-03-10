@@ -4,7 +4,7 @@ from dash import dcc
 from dash import dash_table
 
 def get_data():
-    table = cx.read_sql(conn=Config.SQLALCHEMY_DATABASE_URI, query='''select * from data_overview''',
+    table = cx.read_sql(conn=Config.QUERY_DATABASE_URI, query='''select * from data_overview''',
                             return_type="arrow")
     df = table.to_pandas(split_blocks=False, date_as_object=False)
     df.rename(columns={
