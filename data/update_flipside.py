@@ -1,4 +1,3 @@
-# from os import environ
 from os.path import join, basename, dirname, abspath
 import pandas as pd
 from data import OpenSQL
