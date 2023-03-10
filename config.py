@@ -20,6 +20,8 @@ class Config(object):
     SHROOM_KEY = os.environ['SHROOM_KEY_1']
     QUERY_DATABASE_URI = os.environ.get('QUERY_URL', '').replace(
         'postgres://', 'postgresql://')
+    UPDATE_DATABASE_URI = os.environ.get('UPDATE_URL', '').replace(
+        'postgres://', 'postgresql://')
 
 
 class ProductionConfig(Config):

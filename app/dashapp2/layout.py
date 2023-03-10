@@ -32,15 +32,21 @@ from app.extensions import top_bar
 layout = dbc.Container(
     [
         html.Div(top_bar),
-        html.Div(id='my-output'),
+        html.Br(),
+        # html.Div(id='my-output'),
         html.Div([
-            dbc.Button('Update Data', n_clicks=0, id='update-overview-data-btn'),
-            html.Button('Button 1', id='btn-1-ctx-example'),
-            html.Button('Button 2', id='btn-2-ctx-example'),
-            html.Button('Button 3', id='btn-3-ctx-example'),
-            html.Div(id='container-ctx-example')
-]),
-        html.Div(dash_table.DataTable(id='counts-table', data=data, columns=columns)),
+            dbc.Button('Manually Update Data', n_clicks=0, id='update-overview-data-btn'),
+            # html.Button('Button 1', id='btn-1-ctx-example'),
+            # html.Button('Button 2', id='btn-2-ctx-example'),
+            # html.Button('Button 3', id='btn-3-ctx-example'),
+            # html.Div(id='container-ctx-example')
+        ]), html.Br(),
+        html.Div(dash_table.DataTable(
+            id='counts-table',
+            data=data,
+            columns=columns
+        )
+        ),
         dcc.Interval(
             id='interval-component',
             interval=600 * 1000,  # in milliseconds,
