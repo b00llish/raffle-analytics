@@ -3,10 +3,11 @@ from config import Config
 from dash import dcc
 from dash import dash_table
 
+
 def get_data():
-    table = cx.read_sql(conn=Config.QUERY_DATABASE_URI, query='''select * from data_overview''',
-                            return_type="arrow")
-    df = table.to_pandas(split_blocks=False, date_as_object=False)
+    df = cx.read_sql(conn=Config.QUERY_DATABASE_URI, query='''select * from data_overview''',
+                     return_type="pandas")
+    # df = table.to_pandas(split_blocks=False, date_as_object=False)
     df.rename(columns={
         'dt_start': 'date',
         'raffles_net_cancels': 'Total Raffles'
@@ -25,7 +26,7 @@ def get_data():
         }
         columns.append(col_info)
 
-    data = df.sort_values('date', ascending=False)#.to_dict('records')
+    data = df.sort_values('date', ascending=False)  # .to_dict('records')
     return data
 
 
@@ -39,8 +40,8 @@ def create_tab(content, label, value):
         selected_className='single-tab--selected'
     )
 
-def create_table(name, columns, data):
 
+def create_table(name, columns, data):
     return dash_table.DataTable(
         id=f'{name}-table',
         columns=columns,
