@@ -12,7 +12,7 @@ from typing import List
 
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
-
+from sqlalchemy.sql import alias
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -47,6 +47,8 @@ from typing import Optional
 
 from sqlalchemy.sql.schema import Sequence
 from app.materialized_view_factory import create_mat_view, MaterializedView
+
+
 # from migrations.helpers import immutable_date_trunc
 
 class Raffler(db.Model):
@@ -88,16 +90,20 @@ class Raffle(db.Model):
     ended = relationship('End', backref='raffle', lazy='dynamic')
     winner = relationship('Winner', backref='raffle', lazy='dynamic')
 
-    # mv_data_overview = db.relationship('DataOverview', backref='raffle',
-    #                                    uselist=False,  # makes it a one-to-one relationship
-    #                                    primaryjoin="Raffle.dt_start_trunc==DataOverview.dt_start",
-    #                                    foreign_keys='DataOverview.dt_start',
-    #                                    lazy='dynamic')
+    @hybrid_property
+    def total_sales(self):
+        if self.mv_fact_raffles is not None:  # if None, mv_data_overview needs refreshing
+            return self.mv_fact_raffles.total_sales
 
-    # @hybrid_property
-    # def raffle_count(self):
-    #     if self.mv_data_overview is not None:  # if None, mv_data_overview needs refreshing
-    #         return self.mv_data_overview.raffle_count
+    def raffle_winner(self):
+        return Raffler.query.filter(Raffler.id == self.winner.first().winner_id).first()
+
+    def raffle_host(self):
+        return Raffler.query.filter(Raffler.id == self.host_id).first()
+
+    # def total_sales(self):
+    #     all_buys = Buy.query.filter(Buy.raffle_id == self.id).all()
+    #     return sum(buy.amt_buy for buy in all_buys)
 
     def __init__(self, account, dt_start, host_wallet, nft_mint, host_id):
         self.account = account
@@ -310,13 +316,14 @@ DataOverview_name = "data_overview"
 DataOverview_selectable = db.select(
 
     db.func.date_trunc('day', Raffle.dt_start).label('dt_start'),
+    db.func.max(Raffle.dt_start).label('max_dt'),
     db.func.count(db.func.distinct(Raffle.account)).label('raffle_count'),
     db.func.count(db.func.distinct(Buy.account)).label('buy_count'),
     db.func.count(db.func.distinct(Cancel.account)).label('cancel_count'),
     db.func.count(db.func.distinct(End.account)).label('end_count'),
     db.func.count(db.func.distinct(Winner.account)).label('win_count'),
     (db.func.count(db.func.distinct(Raffle.account)
-                  ) - db.func.count(
+                   ) - db.func.count(
         db.func.distinct(Cancel.account))).label('raffles_net_cancels'),  # .label('raffles_net_cancels')
 ).select_from(
     outerjoin(Raffle, Buy, Raffle.id == Buy.raffle_id)
@@ -332,16 +339,71 @@ class DataOverview(MaterializedView):
     __table__ = create_mat_view(DataOverview_name, DataOverview_selectable)
 
 
-db.Index('data_overview_date_idx', DataOverview.dt_start, unique=True)
+db.Index('idx_data_overview_date', DataOverview.dt_start, unique=True)
 
-# Raffle.mv_data_overview = db.relationship(
-#     'DataOverview',
-#     backref='raffle',
-#     #uselist=False,  # makes it a one-to-one relationship
-#     primaryjoin='Raffle.dt_start_trunc == DataOverview.dt_start',
-#     foreign_keys=DataOverview.dt_start,
-#     lazy='dynamic'
-# )
+FactRaffles_name = "fact_raffles"
 
-# DataOverview_index = db.Index('data_overview_date_idx', 'DataOverview.dt_start', unique=True)
-# DataOverview_index
+FactRaffles_selectable = db.select(
+    Raffle.id.label('raffle_id'),
+    Raffle.dt_start.label('start_date'),
+    End.dt_end.label('end_date'),
+    Raffle.account.label('account'),
+    Raffler.twitter.label('host_name'),
+    Raffler.dao_status.label('host_dao_status'),
+    Winner.winner_wallet.label('winner_wallet'),
+
+).select_from(
+    outerjoin(Raffle, Cancel)
+    .outerjoin(End)
+    .outerjoin(Winner)
+    .outerjoin(Raffler, Raffle.host_id == Raffler.id)
+).where(
+    Cancel.account == None
+)
+
+class FactRaffles(MaterializedView):
+    __table__ = create_mat_view(FactRaffles_name, FactRaffles_selectable)
+
+
+db.Index('idx_fact_raffles_acct', FactRaffles.account, unique=True)
+
+mv_fact_raffles = db.relationship('FactRaffles', backref='raffle',
+                                  uselist=False,  # makes it a one-to-one relationship
+                                  primaryjoin='Raffle.account==FactRaffles.account',
+                                  foreign_keys='FactRaffles.account',
+                                  lazy='dynamic')
+
+TotalSales_name = "total_sales"
+TotalSales_selectable = db.select(
+    Buy.raffle_id.label('raffle_id'),
+    db.func.sum(Buy.amt_buy).label('total_sales')
+).select_from(
+    Buy
+).group_by(Buy.raffle_id, )
+
+
+class TotalSales(MaterializedView):
+    __table__ = create_mat_view(TotalSales_name, TotalSales_selectable)
+
+
+db.Index('idx_total_sales_id', TotalSales.raffle_id, unique=True)
+
+FactBuys_name = "fact_buys"
+
+FactBuys_selectable = db.select(
+    Buy.dt_buy.label('date_buy'),
+    Buy.amt_buy.label('amount_buy'),
+    Buy.buyer_wallet.label('buyer_wallet'),
+    Raffler.twitter.label('buyer_name'),
+    Raffler.dao_status.label('buyer_dao_status'),
+    Buy.raffle_id.label('raffle_id'),
+    Buy.id.label('buy_id')
+
+).select_from(
+    outerjoin(Buy, Raffler, Buy.buyer_id == Raffler.id)
+
+)
+
+
+class FactBuys(MaterializedView):
+    __table__ = create_mat_view(FactBuys_name, FactBuys_selectable)

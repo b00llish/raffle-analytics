@@ -1,4 +1,3 @@
-from os import environ
 from os.path import join, basename, dirname, abspath
 import pandas as pd
 from data import OpenSQL
@@ -6,11 +5,12 @@ from shroomdk import ShroomDK
 from app.models import Raffler, Raffle, Buy, Cancel, End, Winner
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
 from config import Config
 from data import GetExistingFromDB
 
-sdk = ShroomDK(environ.get('SHROOM_KEY_1'))
-session = Session(bind=create_engine(Config.SQLALCHEMY_DATABASE_URI))
+sdk = ShroomDK(Config.SHROOM_KEY)
+session = Session(bind=create_engine(Config.UPDATE_DATABASE_URI))
 
 # open files
 basedir = abspath(dirname(__file__))
@@ -18,13 +18,15 @@ basedir = abspath(dirname(__file__))
 # set file path
 if basename(__file__) == '<input>':
     path = join(basedir, 'data', 'queries')  # if pasting into pyConsole
+    print(path)
 else:
     path = join(basedir, 'queries')  # if running as script
+    print(path)
 
 
 def df_fromSQL(sqlFile):
     file = OpenSQL(sqlFile)
-    query_result_set = sdk.query(file, ttl_minutes=10)
+    query_result_set = sdk.query(file, ttl_minutes=12)
     df = pd.DataFrame.from_dict(query_result_set.records)
     return df
 
@@ -32,51 +34,62 @@ def df_fromSQL(sqlFile):
 # create dict for mapping
 rafflers = session.query(Raffler).all()
 rafflers_dict = {raffler.wallet: raffler for raffler in rafflers}
+print('got rafflers dict')
 
 # get new raffles
 sqlFile = join(path, 'raffles_flipside')
+print(sqlFile)
 df_raffles = df_fromSQL(sqlFile=sqlFile)
+print('got raffles from flipside')
 df_raffles.dt_start = pd.to_datetime(df_raffles.dt_start).dt.tz_localize('UTC')
 all_raffles = GetExistingFromDB(query='''select account from raffles''')
+print('got raffles from db')
 filt = df_raffles.account.isin(all_raffles.account)
 df_raffles = df_raffles.loc[~filt]
-
 # get new buys
 sqlFile = join(path, 'buys_flipside')
 df_buys = df_fromSQL(sqlFile=sqlFile)
+print('got buys from flipside')
 df_buys.dt_buy = pd.to_datetime(df_buys.dt_buy).dt.tz_localize('UTC')
 all_buys = GetExistingFromDB(query='''select * from buys''')
+print('got buys from db')
 all_buys.dt_buy = pd.to_datetime(all_buys.dt_buy).dt.tz_localize('UTC')
 df_buys = pd.concat([df_buys, all_buys, all_buys])
 # keep relevant columns
 df_buys = df_buys[['dt_buy', 'buyer_wallet', 'account', 'amt_buy']]
 # drop all dupes to prevent errors loading in to db
 df_buys.drop_duplicates(keep=False, ignore_index=True, inplace=True)
-
+print('got new buys')
 # get new wins
 sqlFile = join(path, 'wins_flipside')
 df_wins = df_fromSQL(sqlFile=sqlFile)
+print('got wins from flipside')
 df_wins.dt_win = pd.to_datetime(df_wins.dt_win).dt.tz_localize('UTC')
 all_winners = GetExistingFromDB(query='''select account from winners''')
+print('got wins from db')
 filt = df_wins.account.isin(all_winners.account)
 df_wins = df_wins.loc[~filt]
-
+print('got new wins')
 # get new ends
 sqlFile = join(path, 'ends_flipside')
 df_ends = df_fromSQL(sqlFile=sqlFile)
+print('got ends from flipside')
 df_ends.dt_end = pd.to_datetime(df_ends.dt_end).dt.tz_localize('UTC')
 all_endings = GetExistingFromDB(query='''select account from endings''')
+print('got endings from db')
 filt = df_ends.account.isin(all_endings.account)
 df_ends = df_ends.loc[~filt]
-
+print('got new ends')
 # get new cancels
 sqlFile = join(path, 'cancels_flipside')
 df_cancels = df_fromSQL(sqlFile=sqlFile)
+print('got cancels from flipside')
 df_cancels.dt_cancel = pd.to_datetime(df_cancels.dt_cancel).dt.tz_localize('UTC')
 all_cancels = GetExistingFromDB(query='''select account from cancels''')
+print('got cancels from db')
 filt = df_cancels.account.isin(all_cancels.account)
 df_cancels = df_cancels.loc[~filt]
-
+print('got new cancels - finished querying data')
 # determine rafflers to add
 all_rafflers = GetExistingFromDB(query='''select wallet from rafflers''')
 new_rafflers = pd.concat([df_raffles.host_wallet, df_buys.buyer_wallet, df_wins.winner_wallet])
@@ -100,10 +113,13 @@ rafflers = [Raffler(
 # commit new rafflers
 session.bulk_save_objects(rafflers)
 session.commit()
-
+print ('committed rafflers')
 # create dict for mapping
 rafflers = session.query(Raffler).all()
 rafflers_dict = {raffler.wallet: raffler for raffler in rafflers}
+
+
+# filt = df_raffles.host_wallet.isin(rafflers.wallet)
 
 # insert new raffles
 raffles = [Raffle(
@@ -117,7 +133,7 @@ raffles = [Raffle(
 # commit new raffles
 session.bulk_save_objects(raffles)
 session.commit()
-
+print('committed raffles')
 # create dict for mapping
 raffles = session.query(Raffle).all()
 raffles_dict = {raffle.account: raffle for raffle in raffles}
@@ -141,7 +157,7 @@ buys = [Buy(
 # save & commit
 session.bulk_save_objects(buys)
 session.commit()
-
+print('committed buys')
 # keep wins for raffles in db
 df_wins = df_wins.loc[df_wins.account.isin(all_raffles.account)]
 
@@ -185,9 +201,17 @@ ends = [End(
 # save & commit
 session.bulk_save_objects(ends)
 session.commit()
-
+print('committed all data')
 # refresh materialized views
-session.execute(text('''REFRESH MATERIALIZED VIEW m_fact_raffles'''))
+session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.data_overview WITH DATA;'''))
+print('refreshed mv: data overview')
+session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.fact_raffles WITH DATA;'''))
+print('refreshed mv: fact_raffles')
+session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.total_sales WITH DATA;'''))
+print('refreshed mv: total sales')
+session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.fact_buys WITH DATA;'''))
+print('refreshed mv: fact_buys')
 
 # close
 session.close()
+print('session closed')

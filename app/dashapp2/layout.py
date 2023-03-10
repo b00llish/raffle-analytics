@@ -1,82 +1,25 @@
-from data import GetExistingFromDB
-from os.path import join
-from data import path_queries
+# from data import GetExistingFromDB
 from dash import dcc
 from dash import dash_table
 from dash import html
+from dash import ctx
+from datetime import datetime as dt
+from dash.dependencies import Input
+from dash.dependencies import Output
+import pandas_dash
+import dash_bootstrap_components as dbc
+from app.dashapp2.data import get_data, create_table, create_tab
 
-tz_used = 'America/Chicago'
-dt_begin = '2023-02-15'
-# db_conn = os.environ.get('db_uri')
+# query = '''select * from data_overview'''
 
-# filename = join(path_queries, 'counts_by_day')
-query = 'select * from data_overview'
-df = GetExistingFromDB(query=query)
-df.rename(columns={
-    'dt_start': 'date',
-    'raffles_net_cancels': 'Total Raffles'
-}, inplace=True)
+df = get_data()
+data, columns = df.dash.to_dash_table()
 
-def create_tab(content, label, value):
-    return dcc.Tab(
-        content,
-        label=label,
-        value=value,
-        id=f'{value}-tab',
-        className='single-tab',
-        selected_className='single-tab--selected'
-    )
+# id='button-refresh'
 
+counts_table = create_table('counts', data, columns)
+counts_tab = create_tab(counts_table, 'Data Summary', 'data_counts')
 
-# set column types
-columns = [
-    {'name': 'date', 'id': 'date', 'type': 'datetime'}
-]
-col_len = len(columns)
-for name in df.columns[col_len:]:
-    col_info = {
-        'name': name,
-        'id': name,
-        'type': 'numeric',
-        'format': {'specifier': ','}  ## NEEDED FOR NUMERIC COLUMNS
-    }
-    columns.append(col_info)
-
-data = df.sort_values('date', ascending=False).to_dict('records')
-
-raffle_table = dash_table.DataTable(
-    id=f'raffle-table',
-    columns=columns,
-    data=data,
-    fixed_rows={'headers': True},
-    active_cell={'row': 0, 'column': 0},
-    sort_action='native',
-    derived_virtual_data=data,
-    style_table={
-        'minHeight': '80vh',
-        'height': '80vh',
-        'overflowY': 'scroll'
-    },
-    style_cell={
-        'whitespace': 'normal',
-        'height': 'auto',
-        'fontFamily': 'verdana',
-        'textAlign': 'center',
-    },
-    style_header={
-        'fontFamily': 'verdana',
-        'textAlign': 'center',
-        'fontSize': 12
-    },
-    style_data={
-        'fontSize': 12
-    },
-    style_data_conditional=[
-        {'if': {'row_index': 'odd'}, 'backgroundColor': '#fafbfb'}
-    ]
-)
-
-counts_tab = create_tab(raffle_table, 'Data Summary', 'data_counts')
 table_tabs = dcc.Tabs(
     [counts_tab],
     className='tabs-container',
@@ -86,7 +29,29 @@ table_tabs = dcc.Tabs(
 
 from app.extensions import top_bar
 
-layout = html.Div(children=[
-    html.Div(top_bar),
-    html.Div([table_tabs])
-])
+layout = dbc.Container(
+    [
+        html.Div(top_bar),
+        html.Br(),
+        # html.Div(id='my-output'),
+        html.Div([
+            dbc.Button('Manually Update Data', n_clicks=0, id='update-overview-data-btn'),
+            # html.Button('Button 1', id='btn-1-ctx-example'),
+            # html.Button('Button 2', id='btn-2-ctx-example'),
+            # html.Button('Button 3', id='btn-3-ctx-example'),
+            # html.Div(id='container-ctx-example')
+        ]), html.Br(),
+        html.Div(dash_table.DataTable(
+            id='counts-table',
+            data=data,
+            columns=columns
+        )
+        ),
+        dcc.Interval(
+            id='interval-component',
+            interval=600 * 1000,  # in milliseconds,
+            n_intervals=0
+        ),
+    ]
+
+)

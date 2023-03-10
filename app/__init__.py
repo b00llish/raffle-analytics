@@ -1,5 +1,4 @@
 import dash
-import os
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask.helpers import get_root_path
@@ -16,7 +15,7 @@ from config import Config
 
 def create_app():
     server = Flask(__name__)
-    #env_config = os.getenv("APP_SETTINGS", "config.DevelopmentConfig")
+    # env_config = os.getenv("APP_SETTINGS", "config.DevelopmentConfig")
     server.config.from_object(Config)
 
     from app.dashapp1.layout import layout as layout1
@@ -25,6 +24,7 @@ def create_app():
 
     from app.dashapp2.layout import layout as layout2
     from app.dashapp2.callbacks import register_callbacks as register_callbacks2
+    # from app.dashapp2.layout import register_callbacks as register_callbacks2
     register_dashapp(server, 'Data Overview', 'admin-overview', layout2, register_callbacks2)
 
     register_extensions(server)
@@ -63,8 +63,8 @@ def register_dashapp(app, title, base_pathname, layout, register_callbacks_fun):
 #         if view_func.startswith(dashapp.config.url_base_pathname):
 #             dashapp.server.view_functions[view_func] = login_required(
 #                 dashapp.server.view_functions[view_func])
-#
-#
+
+
 def register_extensions(server):
     from app.extensions import db
     # from app.extensions import login
@@ -74,8 +74,8 @@ def register_extensions(server):
 #   login.init_app(server)
 #   login.login_view = 'main.login'
     migrate.init_app(server, db)
-#
-#
+
+
 def register_blueprints(server):
     from app.webapp import server_bp
 

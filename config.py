@@ -17,6 +17,11 @@ class Config(object):
         'postgres://', 'postgresql://')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SECRET_KEY = os.environ['SECRET_KEY']
+    SHROOM_KEY = os.environ['SHROOM_KEY_1']
+    QUERY_DATABASE_URI = os.environ.get('QUERY_URL', '').replace(
+        'postgres://', 'postgresql://')
+    UPDATE_DATABASE_URI = os.environ.get('UPDATE_URL', '').replace(
+        'postgres://', 'postgresql://')
 
 
 class ProductionConfig(Config):
