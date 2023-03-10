@@ -361,6 +361,7 @@ FactRaffles_selectable = db.select(
     Cancel.account == None
 )
 
+
 class FactRaffles(MaterializedView):
     __table__ = create_mat_view(FactRaffles_name, FactRaffles_selectable)
 
@@ -407,3 +408,6 @@ FactBuys_selectable = db.select(
 
 class FactBuys(MaterializedView):
     __table__ = create_mat_view(FactBuys_name, FactBuys_selectable)
+
+
+db.Index('idx_fact_buys_id', FactBuys.buy_id, unique=True)
