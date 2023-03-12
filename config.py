@@ -1,12 +1,13 @@
 import os
-from dotenv import load_dotenv, dotenv_values
+from dotenv import load_dotenv
 from os.path import join, dirname, abspath
 
 basedir = abspath(dirname(__file__))
 dotenv_path = join(basedir, '.env')
 load_dotenv(dotenv_path)
 
-# SECRET_KEY = os.environ.get("SECRET_KEY")
+MAINNET_BASE_URL = "https://rest-api.hellomoon.io/v0"
+DEVNET_BASE_URL = ""
 
 
 class Config(object):
@@ -22,6 +23,7 @@ class Config(object):
         'postgres://', 'postgresql://')
     UPDATE_DATABASE_URI = os.environ.get('UPDATE_URL', '').replace(
         'postgres://', 'postgresql://')
+    HELLOMOON_API = os.environ['HELLO_MOON_KEY']
 
 
 class ProductionConfig(Config):
