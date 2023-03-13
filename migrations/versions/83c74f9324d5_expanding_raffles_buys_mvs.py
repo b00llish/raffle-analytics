@@ -1,8 +1,8 @@
-"""empty message
+"""expanding raffles & buys mvs
 
-Revision ID: 64b94e56c5bd
-Revises: 3742d96a0437
-Create Date: 2023-03-12 20:33:52.554462
+Revision ID: 83c74f9324d5
+Revises: f118ddad3d89
+Create Date: 2023-03-13 00:57:40.830915
 
 """
 from alembic import op
@@ -11,8 +11,8 @@ from alembic_utils.pg_materialized_view import PGMaterializedView
 from sqlalchemy import text as sql_text
 
 # revision identifiers, used by Alembic.
-revision = '64b94e56c5bd'
-down_revision = '3742d96a0437'
+revision = '83c74f9324d5'
+down_revision = 'f118ddad3d89'
 branch_labels = None
 depends_on = None
 
@@ -31,7 +31,7 @@ def upgrade():
     public_fact_buys = PGMaterializedView(
                 schema="public",
                 signature="fact_buys",
-                definition='SELECT buys.dt_buy AS date_buy, buys.amt_buy AS amount_buy, buys.buyer_wallet AS buyer_wallet, rafflers.twitter AS buyer_name, rafflers.dao_status AS buyer_dao_status \nFROM buys LEFT OUTER JOIN raffles ON raffles.id = buys.raffle_id LEFT OUTER JOIN rafflers ON buys.buyer_id = rafflers.id',
+                definition='SELECT buys.dt_buy AS date_buy, buys.amt_buy AS amount_buy, buys.buyer_wallet AS buyer_wallet, rafflers.twitter AS buyer_name, rafflers.dao_status AS buyer_dao_status, buys.raffle_id AS raffle_id, buys.id AS buy_id, rafflers_1.twitter AS host_name, rafflers_1.dao_status AS host_dao_status \nFROM buys LEFT OUTER JOIN rafflers ON buys.buyer_id = rafflers.id LEFT OUTER JOIN raffles ON buys.raffle_id = raffles.id LEFT OUTER JOIN rafflers AS rafflers_1 ON raffles.host_id = rafflers_1.id',
                 with_data=True
             )
 
@@ -53,7 +53,7 @@ def downgrade():
     public_fact_raffles = PGMaterializedView(
                 schema="public",
                 signature="fact_raffles",
-                definition='SELECT raffles.id AS raffle_id,\n    raffles.dt_start AS start_date,\n    endings.dt_end AS end_date,\n    raffles.account,\n    rafflers.twitter AS host_name,\n    rafflers.dao_status AS host_dao_status,\n    winners.winner_wallet,\n    rafflers_1.twitter AS winner_name\n   FROM (((((raffles\n     LEFT JOIN cancels ON ((raffles.id = cancels.raffle_id)))\n     LEFT JOIN endings ON ((raffles.id = endings.raffle_id)))\n     LEFT JOIN winners ON ((raffles.id = winners.raffle_id)))\n     LEFT JOIN rafflers ON ((raffles.host_id = rafflers.id)))\n     LEFT JOIN rafflers rafflers_1 ON ((winners.winner_id = rafflers_1.id)))\n  WHERE (cancels.account IS NULL)',
+                definition='SELECT raffles.id AS raffle_id,\n    raffles.dt_start AS start_date,\n    endings.dt_end AS end_date,\n    raffles.account,\n    rafflers.twitter AS host_name,\n    rafflers.dao_status AS host_dao_status,\n    winners.winner_wallet\n   FROM ((((raffles\n     LEFT JOIN cancels ON ((raffles.id = cancels.raffle_id)))\n     LEFT JOIN endings ON ((raffles.id = endings.raffle_id)))\n     LEFT JOIN winners ON ((raffles.id = winners.raffle_id)))\n     LEFT JOIN rafflers ON ((raffles.host_id = rafflers.id)))\n  WHERE (cancels.account IS NULL)',
                 with_data=True
             )
 
