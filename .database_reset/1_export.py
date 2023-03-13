@@ -4,11 +4,12 @@ from data import GetExistingFromDB
 from tqdm import tqdm
 
 basedir = abspath(dirname(__file__))
-tables = ('raffles', 'buys', 'cancels', 'endings', 'winners', 'rafflers')
+tables = ('raffles', 'buys', 'cancels', 'endings', 'winners', 'rafflers',
+          'prices', 'collections', 'nfts')
 
 # export and save
-
 path = join(basedir, '.database_reset', '1_exports')
+path = join(basedir, '1_exports')
 
 for t in tqdm(tables):
     try:

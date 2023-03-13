@@ -15,9 +15,14 @@ session = Session(bind=create_engine(Config.UPDATE_DATABASE_URI))
 # open files
 basedir = abspath(dirname(__file__))
 
+print(basename(__file__))
+
 # set file path
 if basename(__file__) == '<input>':
     path = join(basedir, 'data', 'queries')  # if pasting into pyConsole
+    print(path)
+elif basename(__file__) == 'data.py':
+    path = join(basedir, 'data', 'queries')
     print(path)
 else:
     path = join(basedir, 'queries')  # if running as script
@@ -202,14 +207,48 @@ ends = [End(
 session.bulk_save_objects(ends)
 session.commit()
 print('committed all data')
+
+query = '''
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_fact_raffles_acct
+    ON public.fact_raffles USING btree
+    (account COLLATE pg_catalog."default")
+    TABLESPACE pg_default;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_fact_buys_id
+    ON public.fact_buys USING btree
+    (buy_id)
+    TABLESPACE pg_default;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_data_overview_date
+    ON public.data_overview USING btree
+    (dt_start DESC NULLS FIRST)
+    TABLESPACE pg_default;
+
+CREATE UNIQUE INDEX IF NOT EXISTS "idx_total_sales_raffleID"
+    ON public.total_sales USING btree
+    (raffle_id ASC NULLS LAST)
+    TABLESPACE pg_default;
+'''
+
+with session:
+    session.execute(text(query))
+    session.commit()
+
 # refresh materialized views
 session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.data_overview WITH DATA;'''))
+session.commit()
 print('refreshed mv: data overview')
+
 session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.fact_raffles WITH DATA;'''))
+session.commit()
 print('refreshed mv: fact_raffles')
+
 session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.total_sales WITH DATA;'''))
+session.commit()
 print('refreshed mv: total sales')
+
 session.execute(text('''REFRESH MATERIALIZED VIEW CONCURRENTLY public.fact_buys WITH DATA;'''))
+session.commit()
 print('refreshed mv: fact_buys')
 
 # close

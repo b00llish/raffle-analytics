@@ -2,14 +2,14 @@ import dash
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask.helpers import get_root_path
-
+from whitenoise import WhiteNoise
 import dash_bootstrap_components as dbc
 
 # from app.nav import nav
 # from flask_nav.elements import *
 # from flask_nav.elements import Navbar, View
 # from flask_login import login_required
-
+from config import basedir
 from config import Config
 
 
@@ -17,6 +17,7 @@ def create_app():
     server = Flask(__name__)
     # env_config = os.getenv("APP_SETTINGS", "config.DevelopmentConfig")
     server.config.from_object(Config)
+    server.wsgi_app = WhiteNoise(server.wsgi_app, root='static/')
 
     from app.dashapp1.layout import layout as layout1
     from app.dashapp1.callbacks import register_callbacks as register_callbacks1
@@ -43,7 +44,8 @@ def register_dashapp(app, title, base_pathname, layout, register_callbacks_fun):
     my_dashapp = dash.Dash(__name__,
                            server=app,
                            url_base_pathname=f'/{base_pathname}/',
-                           assets_folder=get_root_path(__name__) + f'/{base_pathname}/assets/',
+                           # assets_folder=get_root_path(__name__) + f'/{base_pathname}/assets/',
+                           assets_folder=basedir + f'/{base_pathname}/assets/',
                            meta_tags=[meta_viewport],
                            # external_stylesheets=[dbc.themes.BOOTSTRAP] # Default
                            external_stylesheets=[dbc.themes.LUX] # Bootswatch

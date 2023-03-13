@@ -7,7 +7,7 @@ FROM
 , lateral flatten (input => INSTRUCTIONS) i
 WHERE
   -- date range for data:
-  date_trunc('day', t.block_timestamp) > CURRENT_DATE - interval '5 days'
+  date_trunc('day', t.block_timestamp) > CURRENT_DATE - interval '2 days'
   --date_trunc('day', dt_canc) >= '2022-10-31'
   --AND date_trunc('day', dt_canc) < '2022-12-01'
   -- Get rafffle program info:

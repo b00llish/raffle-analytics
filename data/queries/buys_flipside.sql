@@ -11,7 +11,7 @@ WHERE
   -- Get rafffle program info:
   (array_contains(parse_json('{"pubkey":"9ehXDD5bnhSpFVRf99veikjgq8VajtRH7e3D9aVPLqYd","signer":false,"source":"transaction","writable":false}'),account_keys))
   -- date range for data:
-  AND date_trunc('day', dt_buy) > CURRENT_DATE - interval '5 days'
+  AND date_trunc('day', dt_buy) > CURRENT_DATE - interval '2 days'
   -- AND date_trunc('day', dt_buy) > '2023-01-19' -- exclusive
   -- AND date_trunc('day', dt_buy) <= '2023-01-18' -- inclusive
   -- filter for successful transactions
