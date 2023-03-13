@@ -6,7 +6,7 @@ FROM
   solana.core.fact_transactions t
 WHERE
   -- date range for data:
-  date_trunc('day', dt_end) > CURRENT_DATE - interval '3 days'
+  date_trunc('day', dt_end) > CURRENT_DATE - interval '5 days'
   -- date_trunc('day', date_end) >= '2022-10-31' -- inclusive
   -- AND date_trunc('day', date_end) < '2023-01-01' --exclusive
 
