@@ -9,7 +9,7 @@ from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from sqlalchemy_utils import URLType
 from sqlalchemy import create_engine
 from typing import List
-
+from sqlalchemy.orm import aliased
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy.sql import alias
@@ -341,6 +341,8 @@ class DataOverview(MaterializedView):
 
 db.Index('idx_data_overview_date', DataOverview.dt_start, unique=True)
 
+raffler_alias = aliased(Raffler)
+
 FactRaffles_name = "fact_raffles"
 
 FactRaffles_selectable = db.select(
@@ -351,15 +353,19 @@ FactRaffles_selectable = db.select(
     Raffler.twitter.label('host_name'),
     Raffler.dao_status.label('host_dao_status'),
     Winner.winner_wallet.label('winner_wallet'),
+    raffler_alias.twitter.label('winner_name'),
+    raffler_alias.dao_status.label('winner_status'),
 
 ).select_from(
     outerjoin(Raffle, Cancel)
     .outerjoin(End)
     .outerjoin(Winner)
     .outerjoin(Raffler, Raffle.host_id == Raffler.id)
+    .outerjoin(raffler_alias, Winner.winner_id == raffler_alias.id)
 ).where(
     Cancel.account == None
 )
+
 
 class FactRaffles(MaterializedView):
     __table__ = create_mat_view(FactRaffles_name, FactRaffles_selectable)
@@ -388,6 +394,8 @@ class TotalSales(MaterializedView):
 
 db.Index('idx_total_sales_id', TotalSales.raffle_id, unique=True)
 
+raffler_alias2 = aliased(Raffler)
+
 FactBuys_name = "fact_buys"
 
 FactBuys_selectable = db.select(
@@ -396,12 +404,15 @@ FactBuys_selectable = db.select(
     Buy.buyer_wallet.label('buyer_wallet'),
     Raffler.twitter.label('buyer_name'),
     Raffler.dao_status.label('buyer_dao_status'),
-    Buy.raffle_id.label('raffle_id'),
-    Buy.id.label('buy_id')
+    # Buy.raffle_id.label('raffle_id'),
+    # Buy.id.label('buy_id'),
+    raffler_alias2.twitter.label('host_name'),
+    raffler_alias2.dao_status.label('host_dao_status')
 
 ).select_from(
     outerjoin(Buy, Raffler, Buy.buyer_id == Raffler.id)
-
+    .outerjoin(Raffle)
+    .outerjoin(raffler_alias2, Raffle.host_id == raffler_alias2.id)
 )
 
 
