@@ -404,14 +404,14 @@ FactBuys_selectable = db.select(
     Buy.buyer_wallet.label('buyer_wallet'),
     Raffler.twitter.label('buyer_name'),
     Raffler.dao_status.label('buyer_dao_status'),
-    # Buy.raffle_id.label('raffle_id'),
-    # Buy.id.label('buy_id'),
+    Buy.raffle_id.label('raffle_id'),
+    Buy.id.label('buy_id'),# needed for index
     raffler_alias2.twitter.label('host_name'),
     raffler_alias2.dao_status.label('host_dao_status')
 
 ).select_from(
     outerjoin(Buy, Raffler, Buy.buyer_id == Raffler.id)
-    .outerjoin(Raffle)
+    .outerjoin(Raffle, Buy.raffle_id == Raffle.id)
     .outerjoin(raffler_alias2, Raffle.host_id == raffler_alias2.id)
 )
 

@@ -4,11 +4,24 @@ from config import Config
 
 def getdata():
     # get data and keep relevant columns
-    query='''SELECT * FROM fact_buys b LEFT JOIN fact_raffles r on b.raffle_id = r.raffle_id'''
+    # query='''SELECT * FROM fact_buys b LEFT JOIN fact_raffles r on b.raffle_id = r.raffle_id'''
+    query = '''
+                SELECT amount_buy, buyer_name, host_name, buyer_dao_status, host_dao_status 
+                FROM fact_buys
+                -- WHERE buyer_dao_status != 'amateur/non-dao' 
+                --  AND buyer_dao_status is not null
+    ''' ### CANT FILTER IN QUERY WHILE GETTING TOTAL SELL VOLUME
     data = cx.read_sql(conn=Config.QUERY_DATABASE_URI, query=query, return_type="pandas")
-
+    result = pd.concat([
+        data.groupby(['buyer_name', 'buyer_dao_status']).agg({
+            'amount_buy': [('buy_volume', 'sum'), ]
+        }),
+        data.groupby(['host_name', 'host_dao_status']).agg({
+            'amount_buy': [('sell_volume', 'sum'), ]
+        })
+   ])
     # calculate buy volume
-    buy_volume = data.groupby('buyer_name').agg({
+    buy_volume = data.groupby(['buyer_name', 'buyer_dao_status']).agg({
                 'amount_buy': [('buy_volume', 'sum'),]
                  })
     buy_volume.columns = buy_volume.columns.droplevel()
