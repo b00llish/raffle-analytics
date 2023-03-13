@@ -418,3 +418,6 @@ FactBuys_selectable = db.select(
 
 class FactBuys(MaterializedView):
     __table__ = create_mat_view(FactBuys_name, FactBuys_selectable)
+
+
+db.Index('idx_fact_buys_id', FactBuys.buy_id, unique=True)

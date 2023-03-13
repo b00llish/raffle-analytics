@@ -4,6 +4,7 @@ from config import Config
 
 def getdata():
     # get data and keep relevant columns
+
     # query='''SELECT * FROM fact_buys b LEFT JOIN fact_raffles r on b.raffle_id = r.raffle_id'''
     query = '''
                 SELECT amount_buy, buyer_name, host_name, buyer_dao_status, host_dao_status 
@@ -11,6 +12,7 @@ def getdata():
                 -- WHERE buyer_dao_status != 'amateur/non-dao' 
                 --  AND buyer_dao_status is not null
     ''' ### CANT FILTER IN QUERY AND STILL GET TOTAL SELL VOLUME
+
     data = cx.read_sql(conn=Config.QUERY_DATABASE_URI, query=query, return_type="pandas")
     result = pd.concat([
         data.groupby(['buyer_name', 'buyer_dao_status']).agg({
@@ -21,12 +23,14 @@ def getdata():
         })
    ], axis=1).fillna(0)
 
+
     # adjust columns & index
     result.columns = result.columns.droplevel()
     result.reset_index(inplace=True)
     result.rename(columns={
         'level_0': 'name', 'level_1': 'status'
     }, inplace=True)
+
 
     # filter by status - may remove this later to make it optional
     result = result[result.status != 'amateur/non-dao']
